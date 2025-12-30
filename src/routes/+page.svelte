@@ -16,6 +16,42 @@
         taskStore.init();
     });
 
+    /** 计算今日总工作时长（毫秒） */
+    const todayTotalMs = $derived.by(() => {
+        const today = new Date();
+        return taskStore.tasks
+            .filter((task) => {
+                if (!task.completed || !task.endTime) return false;
+                const taskDate = task.startTime;
+                return (
+                    taskDate.getFullYear() === today.getFullYear() &&
+                    taskDate.getMonth() === today.getMonth() &&
+                    taskDate.getDate() === today.getDate()
+                );
+            })
+            .reduce(
+                (sum, task) =>
+                    sum + (task.endTime!.getTime() - task.startTime.getTime()),
+                0,
+            );
+    });
+
+    /** 格式化总时长 */
+    const formattedTotalTime = $derived.by(() => {
+        if (todayTotalMs === 0) return null;
+
+        const hours = Math.floor(todayTotalMs / (1000 * 60 * 60));
+        const minutes = Math.floor(
+            (todayTotalMs % (1000 * 60 * 60)) / (1000 * 60),
+        );
+
+        const parts: string[] = [];
+        if (hours > 0) parts.push(`${hours}小时`);
+        if (minutes > 0) parts.push(`${minutes}分钟`);
+
+        return parts.join("") || "不到1分钟";
+    });
+
     async function handleExport() {
         const markdown = exportToMarkdown(taskStore.tasks);
         const success = await copyToClipboard(markdown);
@@ -63,7 +99,18 @@
                     导出
                 </button>
             </div>
-            <p class="app-subtitle">{formatDate(new Date())}</p>
+            <div class="header-info">
+                <p class="app-subtitle">{formatDate(new Date())}</p>
+                {#if formattedTotalTime}
+                    <div class="total-time">
+                        <span class="total-time-icon">🔥</span>
+                        <span class="total-time-label">今日投入</span>
+                        <span class="total-time-value"
+                            >{formattedTotalTime}</span
+                        >
+                    </div>
+                {/if}
+            </div>
         </div>
     </header>
 
@@ -147,6 +194,42 @@
     .export-btn:hover {
         background: var(--tf-primary);
         color: white;
+    }
+
+    .header-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: var(--tf-spacing-sm);
+    }
+
+    .total-time {
+        display: flex;
+        align-items: center;
+        gap: var(--tf-spacing-xs);
+        background: linear-gradient(
+            135deg,
+            var(--tf-accent-orange),
+            var(--tf-accent-yellow)
+        );
+        padding: var(--tf-spacing-xs) var(--tf-spacing-md);
+        border-radius: var(--tf-radius-full);
+        font-size: 0.8rem;
+    }
+
+    .total-time-icon {
+        font-size: 0.9rem;
+    }
+
+    .total-time-label {
+        color: #92400e;
+        font-weight: 500;
+    }
+
+    .total-time-value {
+        color: #78350f;
+        font-weight: 700;
     }
 
     .app-main {
