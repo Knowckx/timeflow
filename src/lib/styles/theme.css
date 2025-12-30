@@ -1,0 +1,244 @@
+/* TimeFlow Theme Configuration
+ * 设计风格：极简主义 + 扁平化 2.0 + 马卡龙色系
+ */
+
+:root {
+  /* ========== 马卡龙色系 (Pastel Colors) ========== */
+  
+  /* 主色：天空蓝 */
+  --tf-primary: #7EC8E3;
+  --tf-primary-light: #A8D8EA;
+  --tf-primary-dark: #5DADE2;
+  
+  /* 点缀色 */
+  --tf-accent-green: #A8E6CF;      /* 淡绿 - 完成状态 */
+  --tf-accent-orange: #FFD3B6;     /* 淡橙 - 进行中 */
+  --tf-accent-pink: #FFAAA5;       /* 淡粉 - 警告/删除 */
+  --tf-accent-purple: #D4A5FF;     /* 淡紫 - 特殊标记 */
+  --tf-accent-yellow: #FFEAA7;     /* 淡黄 - 高亮 */
+  
+  /* 基础色 */
+  --tf-bg: #FFFFFF;
+  --tf-bg-secondary: #F8FAFC;
+  --tf-bg-card: #FFFFFF;
+  --tf-text: #2D3748;
+  --tf-text-secondary: #718096;
+  --tf-text-muted: #A0AEC0;
+  --tf-border: #E2E8F0;
+  
+  /* ========== 圆角配置 ========== */
+  --tf-radius-sm: 8px;
+  --tf-radius-md: 12px;
+  --tf-radius-lg: 16px;
+  --tf-radius-xl: 24px;
+  --tf-radius-full: 9999px;
+  
+  /* ========== 间距配置 (高留白) ========== */
+  --tf-spacing-xs: 4px;
+  --tf-spacing-sm: 8px;
+  --tf-spacing-md: 16px;
+  --tf-spacing-lg: 24px;
+  --tf-spacing-xl: 32px;
+  --tf-spacing-2xl: 48px;
+  
+  /* ========== 弥散阴影 ========== */
+  --tf-shadow-sm: 0 2px 8px rgba(126, 200, 227, 0.08);
+  --tf-shadow-md: 0 4px 16px rgba(126, 200, 227, 0.12);
+  --tf-shadow-lg: 0 8px 32px rgba(126, 200, 227, 0.16);
+  --tf-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+  
+  /* ========== 过渡动画 ========== */
+  --tf-transition-fast: 150ms ease;
+  --tf-transition-normal: 250ms ease;
+  --tf-transition-slow: 350ms ease;
+}
+
+/* ========== 工具类 ========== */
+
+/* 卡片样式 */
+.tf-card {
+  background: var(--tf-bg-card);
+  border-radius: var(--tf-radius-lg);
+  box-shadow: var(--tf-shadow-card);
+  padding: var(--tf-spacing-lg);
+  transition: box-shadow var(--tf-transition-normal);
+}
+
+.tf-card:hover {
+  box-shadow: var(--tf-shadow-md);
+}
+
+/* 输入框样式 */
+.tf-input {
+  background: var(--tf-bg-secondary);
+  border: 2px solid transparent;
+  border-radius: var(--tf-radius-lg);
+  padding: var(--tf-spacing-md) var(--tf-spacing-lg);
+  font-size: 1rem;
+  color: var(--tf-text);
+  transition: all var(--tf-transition-fast);
+  outline: none;
+  width: 100%;
+}
+
+.tf-input::placeholder {
+  color: var(--tf-text-muted);
+}
+
+.tf-input:focus {
+  border-color: var(--tf-primary);
+  background: var(--tf-bg);
+  box-shadow: var(--tf-shadow-sm);
+}
+
+/* FAB 悬浮按钮 */
+.tf-fab {
+  position: fixed;
+  bottom: var(--tf-spacing-xl);
+  right: var(--tf-spacing-xl);
+  width: 56px;
+  height: 56px;
+  border-radius: var(--tf-radius-full);
+  background: var(--tf-primary);
+  color: white;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--tf-shadow-lg);
+  transition: all var(--tf-transition-normal);
+}
+
+.tf-fab:hover {
+  background: var(--tf-primary-dark);
+  transform: scale(1.05);
+}
+
+.tf-fab:active {
+  transform: scale(0.95);
+}
+
+/* 时间线样式 */
+.tf-timeline {
+  position: relative;
+  padding-left: var(--tf-spacing-xl);
+}
+
+.tf-timeline::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--tf-primary-light), var(--tf-border));
+}
+
+.tf-timeline-dot {
+  position: absolute;
+  left: -21px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 12px;
+  height: 12px;
+  border-radius: var(--tf-radius-full);
+  background: var(--tf-primary);
+  border: 2px solid var(--tf-bg);
+  box-shadow: var(--tf-shadow-sm);
+}
+
+.tf-timeline-dot.completed {
+  background: var(--tf-accent-green);
+}
+
+.tf-timeline-dot.active {
+  background: var(--tf-accent-orange);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(255, 211, 182, 0.7);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 211, 182, 0);
+  }
+}
+
+/* 状态标签 */
+.tf-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--tf-spacing-xs) var(--tf-spacing-sm);
+  border-radius: var(--tf-radius-full);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.tf-badge-progress {
+  background: var(--tf-accent-orange);
+  color: #B7791F;
+}
+
+.tf-badge-completed {
+  background: var(--tf-accent-green);
+  color: #276749;
+}
+
+/* 时间显示 */
+.tf-time {
+  font-family: 'SF Mono', 'Consolas', monospace;
+  font-size: 0.875rem;
+  color: var(--tf-text-secondary);
+}
+
+.tf-duration {
+  font-weight: 600;
+  color: var(--tf-primary-dark);
+}
+
+/* 复选框样式 */
+.tf-checkbox {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border: 2px solid var(--tf-border);
+  border-radius: var(--tf-radius-sm);
+  cursor: pointer;
+  transition: all var(--tf-transition-fast);
+  position: relative;
+}
+
+.tf-checkbox:checked {
+  background: var(--tf-accent-green);
+  border-color: var(--tf-accent-green);
+}
+
+.tf-checkbox:checked::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 0.875rem;
+  font-weight: bold;
+}
+
+/* Checkpoint 样式 */
+.tf-checkpoint {
+  padding-left: var(--tf-spacing-lg);
+  border-left: 2px dashed var(--tf-border);
+  margin-left: var(--tf-spacing-xs);
+}
+
+.tf-checkpoint-item {
+  display: flex;
+  align-items: center;
+  gap: var(--tf-spacing-sm);
+  padding: var(--tf-spacing-sm) 0;
+  color: var(--tf-text-secondary);
+  font-size: 0.875rem;
+}
