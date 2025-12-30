@@ -7,10 +7,26 @@
     import TaskList from "$lib/components/TaskList.svelte";
     import TaskInput from "$lib/components/TaskInput.svelte";
     import { formatDate } from "$lib/utils/time";
+    import { exportToMarkdown, copyToClipboard } from "$lib/utils/export";
+    import infa from "infa-s5";
+
+    let showExportToast = $state(false);
 
     onMount(() => {
         taskStore.init();
     });
+
+    async function handleExport() {
+        const markdown = exportToMarkdown(taskStore.tasks);
+        const success = await copyToClipboard(markdown);
+
+        if (success) {
+            infa.Tip.success("已复制到剪贴板！");
+        } else {
+            infa.Tip.error("复制失败，请手动复制");
+            console.log(markdown);
+        }
+    }
 </script>
 
 <svelte:head>
@@ -22,10 +38,31 @@
     <!-- 头部 -->
     <header class="app-header">
         <div class="header-content">
-            <h1 class="app-title">
-                <span class="title-icon">⏱️</span>
-                TimeFlow
-            </h1>
+            <div class="header-top">
+                <h1 class="app-title">
+                    <span class="title-icon">⏱️</span>
+                    TimeFlow
+                </h1>
+                <button
+                    class="export-btn"
+                    onclick={handleExport}
+                    title="导出今日记录为 Markdown"
+                >
+                    <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path
+                            d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"
+                        />
+                    </svg>
+                    导出
+                </button>
+            </div>
             <p class="app-subtitle">{formatDate(new Date())}</p>
         </div>
     </header>
@@ -84,6 +121,32 @@
         font-size: 0.875rem;
         color: var(--tf-text-secondary);
         margin: var(--tf-spacing-xs) 0 0;
+    }
+
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .export-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--tf-spacing-xs);
+        padding: var(--tf-spacing-sm) var(--tf-spacing-md);
+        background: var(--tf-primary-light);
+        color: var(--tf-primary-dark);
+        border: none;
+        border-radius: var(--tf-radius-lg);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--tf-transition-fast);
+    }
+
+    .export-btn:hover {
+        background: var(--tf-primary);
+        color: white;
     }
 
     .app-main {

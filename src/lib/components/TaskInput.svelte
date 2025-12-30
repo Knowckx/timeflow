@@ -32,7 +32,31 @@
         // 等待 DOM 更新后聚焦
         setTimeout(() => inputRef?.focus(), 50);
     }
+
+    /** 全局快捷键处理 */
+    function handleGlobalKeydown(e: KeyboardEvent) {
+        // 如果已经在输入状态，不处理
+        if (isExpanded) return;
+
+        // 如果焦点在其他输入框中，不处理
+        const activeElement = document.activeElement;
+        if (
+            activeElement instanceof HTMLInputElement ||
+            activeElement instanceof HTMLTextAreaElement
+        ) {
+            return;
+        }
+
+        // Enter 键展开输入框
+        if (e.key === "Enter") {
+            e.preventDefault();
+            handleFabClick();
+        }
+    }
 </script>
+
+<!-- 全局键盘监听 -->
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 <!-- 输入区域 -->
 {#if isExpanded}
