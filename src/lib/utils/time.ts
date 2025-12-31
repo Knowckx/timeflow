@@ -92,3 +92,26 @@ export function isSameDay(date1: Date, date2: Date): boolean {
         date1.getDate() === date2.getDate()
     );
 }
+
+/**
+ * 获取日期部分（时间归零为 00:00:00）
+ */
+export function getDateOnly(date: Date): Date {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+/**
+ * 日期加减天数
+ */
+export function addDays(date: Date, days: number): Date {
+    const result = new Date(date);
+    result.setDate(result.getDate() + days);
+    return result;
+}
+
+/**
+ * 判断日期是否是今天
+ */
+export function isToday(date: Date): boolean {
+    return isSameDay(date, new Date());
+}

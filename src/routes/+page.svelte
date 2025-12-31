@@ -1,32 +1,52 @@
 <!-- src\routes\+page.svelte -->
 <!-- TimeFlow - 时间记录应用主页 -->
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
     import "$lib/styles/theme.css";
     import { taskStore } from "$lib/stores/taskStore.svelte";
     import TaskList from "$lib/components/TaskList.svelte";
     import TaskInput from "$lib/components/TaskInput.svelte";
-    import { formatDate } from "$lib/utils/time";
+    import { formatDate, isSameDay, isToday } from "$lib/utils/time";
     import { exportToMarkdown, copyToClipboard } from "$lib/utils/export";
     import infa from "infa-s5";
 
     let showExportToast = $state(false);
+    let checkDateInterval: ReturnType<typeof setInterval> | null = null;
+    let lastCheckedDate = new Date();
 
     onMount(() => {
         taskStore.init();
+
+        // 每分钟检查是否跨日，跨日时自动切换到新的一天
+        checkDateInterval = setInterval(() => {
+            const now = new Date();
+            if (!isSameDay(now, lastCheckedDate)) {
+                // 跨日了，如果当前显示的是昨天（之前的"今天"），自动切换到新的今天
+                if (isSameDay(taskStore.selectedDate, lastCheckedDate)) {
+                    taskStore.resetToToday();
+                }
+                lastCheckedDate = now;
+            }
+        }, 60 * 1000); // 每分钟检查一次
     });
 
-    /** 计算今日总工作时长（毫秒） */
-    const todayTotalMs = $derived.by(() => {
-        const today = new Date();
+    onDestroy(() => {
+        if (checkDateInterval) {
+            clearInterval(checkDateInterval);
+        }
+    });
+
+    /** 计算选中日期的总工作时长（毫秒） */
+    const selectedDateTotalMs = $derived.by(() => {
+        const selected = taskStore.selectedDate;
         return taskStore.tasks
             .filter((task) => {
                 if (!task.completed || !task.endTime) return false;
                 const taskDate = task.startTime;
                 return (
-                    taskDate.getFullYear() === today.getFullYear() &&
-                    taskDate.getMonth() === today.getMonth() &&
-                    taskDate.getDate() === today.getDate()
+                    taskDate.getFullYear() === selected.getFullYear() &&
+                    taskDate.getMonth() === selected.getMonth() &&
+                    taskDate.getDate() === selected.getDate()
                 );
             })
             .reduce(
@@ -38,11 +58,11 @@
 
     /** 格式化总时长 */
     const formattedTotalTime = $derived.by(() => {
-        if (todayTotalMs === 0) return null;
+        if (selectedDateTotalMs === 0) return null;
 
-        const hours = Math.floor(todayTotalMs / (1000 * 60 * 60));
+        const hours = Math.floor(selectedDateTotalMs / (1000 * 60 * 60));
         const minutes = Math.floor(
-            (todayTotalMs % (1000 * 60 * 60)) / (1000 * 60),
+            (selectedDateTotalMs % (1000 * 60 * 60)) / (1000 * 60),
         );
 
         const parts: string[] = [];
@@ -51,6 +71,9 @@
 
         return parts.join("") || "不到1分钟";
     });
+
+    /** 是否显示今天 */
+    const isShowingToday = $derived(isToday(taskStore.selectedDate));
 
     async function handleExport() {
         const markdown = exportToMarkdown(taskStore.tasks);
@@ -100,11 +123,59 @@
                 </button>
             </div>
             <div class="header-info">
-                <p class="app-subtitle">{formatDate(new Date())}</p>
+                <div class="date-nav">
+                    <button
+                        class="date-nav-btn"
+                        onclick={() => taskStore.goToPreviousDay()}
+                        title="前一天"
+                    >
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path d="M15 18l-6-6 6-6" />
+                        </svg>
+                    </button>
+                    <div class="date-display">
+                        <span class="app-subtitle"
+                            >{formatDate(taskStore.selectedDate)}</span
+                        >
+                        {#if !isShowingToday}
+                            <button
+                                class="today-link"
+                                onclick={() => taskStore.resetToToday()}
+                            >
+                                回到今天
+                            </button>
+                        {/if}
+                    </div>
+                    <button
+                        class="date-nav-btn"
+                        onclick={() => taskStore.goToNextDay()}
+                        title="后一天"
+                    >
+                        <svg
+                            width="16"
+                            height="16"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path d="M9 18l6-6-6-6" />
+                        </svg>
+                    </button>
+                </div>
                 {#if formattedTotalTime}
                     <div class="total-time">
                         <span class="total-time-icon">🔥</span>
-                        <span class="total-time-label">今日投入</span>
+                        <span class="total-time-label"
+                            >{isShowingToday ? "今日投入" : "当日投入"}</span
+                        >
                         <span class="total-time-value"
                             >{formattedTotalTime}</span
                         >
@@ -202,6 +273,64 @@
         justify-content: space-between;
         flex-wrap: wrap;
         gap: var(--tf-spacing-sm);
+        margin-top: var(--tf-spacing-sm);
+    }
+
+    .date-nav {
+        display: flex;
+        align-items: center;
+        gap: var(--tf-spacing-xs);
+    }
+
+    .date-nav-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        background: var(--tf-bg-secondary);
+        border: 1px solid var(--tf-border);
+        border-radius: var(--tf-radius-full);
+        color: var(--tf-text-secondary);
+        cursor: pointer;
+        transition: all var(--tf-transition-fast);
+    }
+
+    .date-nav-btn:hover {
+        background: var(--tf-primary-light);
+        color: var(--tf-primary-dark);
+        border-color: var(--tf-primary-light);
+    }
+
+    .date-display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        min-width: 140px;
+        text-align: center;
+    }
+
+    .date-display .app-subtitle {
+        margin: 0;
+    }
+
+    .today-link {
+        padding: 2px 8px;
+        background: var(--tf-primary-light);
+        color: var(--tf-primary);
+        border: none;
+        border-radius: var(--tf-radius-sm);
+        font-size: 0.7rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--tf-transition-fast);
+    }
+
+    .today-link:hover {
+        background: var(--tf-primary);
+        color: white;
     }
 
     .total-time {

@@ -46,6 +46,7 @@ function saveTasks(tasks: Task[]): void {
 function createTaskStore() {
     let tasks = $state<Task[]>([]);
     let initialized = $state(false);
+    let selectedDate = $state<Date>(new Date());
 
     return {
         /** 获取所有任务 */
@@ -58,11 +59,42 @@ function createTaskStore() {
             return initialized;
         },
 
+        /** 获取当前选中的日期 */
+        get selectedDate() {
+            return selectedDate;
+        },
+
         /** 初始化（从 localStorage 加载） */
         init() {
             if (initialized) return;
             tasks = loadTasks();
+            selectedDate = new Date(); // 每次初始化重置到今天
             initialized = true;
+        },
+
+        /** 设置选中日期 */
+        setSelectedDate(date: Date) {
+            selectedDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        },
+
+        /** 切换到前一天 */
+        goToPreviousDay() {
+            const prev = new Date(selectedDate);
+            prev.setDate(prev.getDate() - 1);
+            selectedDate = prev;
+        },
+
+        /** 切换到后一天 */
+        goToNextDay() {
+            const next = new Date(selectedDate);
+            next.setDate(next.getDate() + 1);
+            selectedDate = next;
+        },
+
+        /** 重置到今天 */
+        resetToToday() {
+            const today = new Date();
+            selectedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         },
 
         /** 添加新任务 */
