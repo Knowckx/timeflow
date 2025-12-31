@@ -66,6 +66,12 @@ interface WorkSession {
 | `time.ts` | 时间格式化、日期操作（`formatDate`, `isSameDay`, `addDays`, `isToday`） |
 | `export.ts` | Markdown 导出（`exportToMarkdown`, `copyToClipboard`） |
 
+### 配置 (`src/lib/`)
+
+| 文件 | 说明 |
+|------|------|
+| `config.ts` | 全局配置（`MIN_SESSION_DURATION_MS` 最短时段阈值 10秒） |
+
 ### UI 组件 (`src/lib/components/`)
 
 | 文件 | 说明 |

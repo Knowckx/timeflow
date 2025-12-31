@@ -8,6 +8,7 @@
     import { formatTime, formatDurationReadable } from "$lib/utils/time";
     import CheckpointItem from "./CheckpointItem.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
+    import infa from "infa-s5";
 
     interface Props {
         task: Task;
@@ -94,7 +95,10 @@
     }
 
     function handlePause() {
-        taskStore.pauseTask(task.id);
+        const { discarded } = taskStore.pauseTask(task.id);
+        if (discarded) {
+            infa.Tip.info("时段太短，已忽略");
+        }
     }
 
     function handleResume() {

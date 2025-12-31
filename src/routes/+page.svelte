@@ -96,7 +96,46 @@
             console.log(markdown);
         }
     }
+
+    /** 处理全局键盘事件 */
+    function handleGlobalKeydown(e: KeyboardEvent) {
+        // 如果焦点在输入框内，不处理
+        const target = e.target as HTMLElement;
+        if (
+            target.tagName === "INPUT" ||
+            target.tagName === "TEXTAREA" ||
+            target.isContentEditable
+        ) {
+            return;
+        }
+
+        // 空格键：切换当前任务状态（暂停/继续）
+        if (e.key === " " || e.code === "Space") {
+            e.preventDefault();
+            const activeTask = taskStore.getActiveTask();
+            if (activeTask) {
+                // 有进行中的任务，暂停它
+                const { discarded } = taskStore.pauseTask(activeTask.id);
+                if (discarded) {
+                    infa.Tip.info("时段太短，已忽略");
+                } else {
+                    infa.Tip.success("已暂停任务");
+                }
+            } else {
+                // 没有进行中的任务，继续最近暂停的任务
+                const pausedTask = taskStore.tasks.find(
+                    (t) => t.status === "paused",
+                );
+                if (pausedTask) {
+                    taskStore.startTask(pausedTask.id);
+                    infa.Tip.success("已继续任务");
+                }
+            }
+        }
+    }
 </script>
+
+<svelte:window onkeydown={handleGlobalKeydown} />
 
 <svelte:head>
     <title>TimeFlow - 时间记录</title>

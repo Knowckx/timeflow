@@ -4,6 +4,7 @@
  */
 
 import type { Task, WorkSession, Checkpoint, NewTaskInput, NewCheckpointInput } from '$lib/types/task';
+import { config } from '$lib/config';
 
 const STORAGE_KEY = 'timeflow_tasks_v2'; // 新版本 key，旧数据直接废弃
 
@@ -159,13 +160,33 @@ function createTaskStore() {
             saveTasks(tasks);
         },
 
-        /** 暂停任务 */
-        pauseTask(taskId: string): void {
+        /** 暂停任务，返回是否丢弃了过短的时段 */
+        pauseTask(taskId: string): { discarded: boolean } {
+            let discarded = false;
+
             tasks = tasks.map(task => {
                 if (task.id !== taskId) return task;
                 if (task.status !== 'active') return task;
 
-                // 关闭当前时段
+                // 找到当前活跃的时段
+                const currentSession = task.sessions.find(s => !s.endTime);
+                if (!currentSession) return task;
+
+                const duration = Date.now() - currentSession.startTime.getTime();
+
+                // 时段太短，丢弃它
+                if (duration < config.MIN_SESSION_DURATION_MS) {
+                    discarded = true;
+                    const remainingSessions = task.sessions.filter(s => s.id !== currentSession.id);
+                    return {
+                        ...task,
+                        // 如果没有其他时段了，回到 pending；否则回到 paused
+                        status: remainingSessions.length > 0 ? 'paused' as const : 'pending' as const,
+                        sessions: remainingSessions
+                    };
+                }
+
+                // 正常关闭时段
                 const updatedSessions = task.sessions.map(session => {
                     if (session.endTime) return session;
                     return { ...session, endTime: new Date() };
@@ -178,6 +199,7 @@ function createTaskStore() {
                 };
             });
             saveTasks(tasks);
+            return { discarded };
         },
 
         /** 继续任务（创建新时段） */
