@@ -8,7 +8,7 @@
     const filteredTasks = $derived.by(() => {
         const selected = taskStore.selectedDate;
         return taskStore.tasks.filter((task) =>
-            isSameDay(task.startTime, selected),
+            isSameDay(task.createdAt, selected),
         );
     });
 </script>

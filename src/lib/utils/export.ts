@@ -3,20 +3,23 @@
  */
 
 import type { Task } from '$lib/types/task';
-import { formatDate, formatTime, calculateDuration } from './time';
+import { formatDate, formatTime, isSameDay } from './time';
+
+/**
+ * 计算任务总用时（毫秒）
+ */
+function calculateTaskDurationMs(task: Task): number {
+    return task.sessions.reduce((sum, session) => {
+        if (!session.endTime) return sum;
+        return sum + (session.endTime.getTime() - session.startTime.getTime());
+    }, 0);
+}
 
 /**
  * 将任务列表导出为 Markdown 格式
  */
 export function exportToMarkdown(tasks: Task[], date: Date = new Date()): string {
-    const todayTasks = tasks.filter(task => {
-        const taskDate = task.startTime;
-        return (
-            taskDate.getFullYear() === date.getFullYear() &&
-            taskDate.getMonth() === date.getMonth() &&
-            taskDate.getDate() === date.getDate()
-        );
-    });
+    const todayTasks = tasks.filter(task => isSameDay(task.createdAt, date));
 
     if (todayTasks.length === 0) {
         return `# ${formatDate(date)}\n\n_今天还没有记录任务_`;
@@ -30,29 +33,35 @@ export function exportToMarkdown(tasks: Task[], date: Date = new Date()): string
     lines.push('## 🚀 工作记录');
     lines.push('');
 
-    // 按开始时间排序
+    // 按创建时间排序
     const sortedTasks = [...todayTasks].sort(
-        (a, b) => a.startTime.getTime() - b.startTime.getTime()
+        (a, b) => a.createdAt.getTime() - b.createdAt.getTime()
     );
 
     for (const task of sortedTasks) {
-        const startTime = formatTime(task.startTime, { showSeconds: false });
-        const checkbox = task.completed ? '[x]' : '[ ]';
+        const startTime = formatTime(task.createdAt, { showSeconds: false });
+        const checkbox = task.status === 'completed' ? '[x]' : '[ ]';
 
-        if (task.completed && task.endTime) {
-            const endTime = formatTime(task.endTime, { showSeconds: false });
-            const duration = formatDurationShort(task.startTime, task.endTime);
+        if (task.status === 'completed' && task.completedAt) {
+            const endTime = formatTime(task.completedAt, { showSeconds: false });
+            const duration = formatDurationShort(calculateTaskDurationMs(task));
             lines.push(`- ${checkbox} ${startTime} - ${endTime} | ${task.title} (用时 ${duration})`);
         } else {
-            lines.push(`- ${checkbox} ${startTime} | ${task.title} (进行中...)`);
+            const statusText = task.status === 'pending' ? '待开始' :
+                task.status === 'active' ? '进行中' : '已暂停';
+            lines.push(`- ${checkbox} ${startTime} | ${task.title} (${statusText})`);
+        }
+
+        // 添加工作时段信息
+        if (task.sessions.length > 1) {
+            lines.push(`    > 共 ${task.sessions.length} 个工作时段`);
         }
 
         // 添加 Checkpoints
-        if (task.checkpoints.length > 0) {
-            for (const cp of task.checkpoints) {
-                const cpTime = formatTime(cp.time, { showSeconds: false });
-                lines.push(`    > ${cpTime} - ${cp.note}`);
-            }
+        const allCheckpoints = task.sessions.flatMap(s => s.checkpoints);
+        for (const cp of allCheckpoints) {
+            const cpTime = formatTime(cp.time, { showSeconds: false });
+            lines.push(`    > ${cpTime} - ${cp.note}`);
         }
     }
 
@@ -61,22 +70,17 @@ export function exportToMarkdown(tasks: Task[], date: Date = new Date()): string
     lines.push('---');
     lines.push('');
 
-    const completedCount = todayTasks.filter(t => t.completed).length;
+    const completedCount = todayTasks.filter(t => t.status === 'completed').length;
     const totalCount = todayTasks.length;
     lines.push(`📊 **统计**: 完成 ${completedCount}/${totalCount} 个任务`);
 
     // 计算总用时
     const totalMs = todayTasks
-        .filter(t => t.completed && t.endTime)
-        .reduce((sum, t) => sum + (t.endTime!.getTime() - t.startTime.getTime()), 0);
+        .filter(t => t.status === 'completed')
+        .reduce((sum, t) => sum + calculateTaskDurationMs(t), 0);
 
     if (totalMs > 0) {
-        const hours = Math.floor(totalMs / (1000 * 60 * 60));
-        const minutes = Math.floor((totalMs % (1000 * 60 * 60)) / (1000 * 60));
-        const parts: string[] = [];
-        if (hours > 0) parts.push(`${hours}小时`);
-        if (minutes > 0) parts.push(`${minutes}分钟`);
-        lines.push(`⏱️ **总用时**: ${parts.join('') || '0分钟'}`);
+        lines.push(`⏱️ **总用时**: ${formatDurationShort(totalMs)}`);
     }
 
     return lines.join('\n');
@@ -86,13 +90,11 @@ export function exportToMarkdown(tasks: Task[], date: Date = new Date()): string
  * 格式化持续时间为简短格式
  * @returns 如 "1h30m" 或 "45m"
  */
-function formatDurationShort(start: Date, end: Date): string {
-    const diffMs = end.getTime() - start.getTime();
+function formatDurationShort(ms: number): string {
+    if (ms < 0) return '0m';
 
-    if (diffMs < 0) return '0m';
-
-    const hours = Math.floor(diffMs / (1000 * 60 * 60));
-    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
 
     const parts: string[] = [];
     if (hours > 0) parts.push(`${hours}h`);

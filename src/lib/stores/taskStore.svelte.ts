@@ -3,9 +3,9 @@
  * 使用 Svelte 5 runes 管理任务状态
  */
 
-import type { Task, Checkpoint, NewTaskInput, NewCheckpointInput } from '$lib/types/task';
+import type { Task, WorkSession, Checkpoint, NewTaskInput, NewCheckpointInput } from '$lib/types/task';
 
-const STORAGE_KEY = 'timeflow_tasks';
+const STORAGE_KEY = 'timeflow_tasks_v2'; // 新版本 key，旧数据直接废弃
 
 /** 生成唯一 ID */
 function generateId(): string {
@@ -24,11 +24,16 @@ function loadTasks(): Task[] {
         // 恢复 Date 对象
         return parsed.map((task: Task) => ({
             ...task,
-            startTime: new Date(task.startTime),
-            endTime: task.endTime ? new Date(task.endTime) : undefined,
-            checkpoints: task.checkpoints.map((cp: Checkpoint) => ({
-                ...cp,
-                time: new Date(cp.time)
+            createdAt: new Date(task.createdAt),
+            completedAt: task.completedAt ? new Date(task.completedAt) : undefined,
+            sessions: task.sessions.map((session: WorkSession) => ({
+                ...session,
+                startTime: new Date(session.startTime),
+                endTime: session.endTime ? new Date(session.endTime) : undefined,
+                checkpoints: session.checkpoints.map((cp: Checkpoint) => ({
+                    ...cp,
+                    time: new Date(cp.time)
+                }))
             }))
         }));
     } catch {
@@ -40,6 +45,22 @@ function loadTasks(): Task[] {
 function saveTasks(tasks: Task[]): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+}
+
+/** 计算任务总用时（毫秒） */
+export function calculateTaskDuration(task: Task): number {
+    return task.sessions.reduce((sum, session) => {
+        if (!session.endTime) {
+            // 进行中的时段，计算到当前时间
+            return sum + (Date.now() - session.startTime.getTime());
+        }
+        return sum + (session.endTime.getTime() - session.startTime.getTime());
+    }, 0);
+}
+
+/** 获取任务当前活跃的时段 */
+function getCurrentSession(task: Task): WorkSession | undefined {
+    return task.sessions.find(s => !s.endTime);
 }
 
 /** 创建任务状态管理器 */
@@ -68,7 +89,7 @@ function createTaskStore() {
         init() {
             if (initialized) return;
             tasks = loadTasks();
-            selectedDate = new Date(); // 每次初始化重置到今天
+            selectedDate = new Date();
             initialized = true;
         },
 
@@ -97,14 +118,19 @@ function createTaskStore() {
             selectedDate = new Date(today.getFullYear(), today.getMonth(), today.getDate());
         },
 
-        /** 添加新任务 */
+        /** 获取当前进行中的任务 */
+        getActiveTask(): Task | undefined {
+            return tasks.find(t => t.status === 'active');
+        },
+
+        /** 添加新任务（状态为 pending） */
         addTask(input: NewTaskInput): Task {
             const newTask: Task = {
                 id: generateId(),
                 title: input.title,
-                startTime: new Date(),
-                completed: false,
-                checkpoints: []
+                status: 'pending',
+                createdAt: new Date(),
+                sessions: []
             };
 
             tasks = [newTask, ...tasks];
@@ -112,55 +138,102 @@ function createTaskStore() {
             return newTask;
         },
 
-        /** 标记任务完成 */
+        /** 开始任务 */
+        startTask(taskId: string): void {
+            tasks = tasks.map(task => {
+                if (task.id !== taskId) return task;
+                if (task.status !== 'pending' && task.status !== 'paused') return task;
+
+                const newSession: WorkSession = {
+                    id: generateId(),
+                    startTime: new Date(),
+                    checkpoints: []
+                };
+
+                return {
+                    ...task,
+                    status: 'active' as const,
+                    sessions: [...task.sessions, newSession]
+                };
+            });
+            saveTasks(tasks);
+        },
+
+        /** 暂停任务 */
+        pauseTask(taskId: string): void {
+            tasks = tasks.map(task => {
+                if (task.id !== taskId) return task;
+                if (task.status !== 'active') return task;
+
+                // 关闭当前时段
+                const updatedSessions = task.sessions.map(session => {
+                    if (session.endTime) return session;
+                    return { ...session, endTime: new Date() };
+                });
+
+                return {
+                    ...task,
+                    status: 'paused' as const,
+                    sessions: updatedSessions
+                };
+            });
+            saveTasks(tasks);
+        },
+
+        /** 继续任务（创建新时段） */
+        resumeTask(taskId: string): void {
+            this.startTask(taskId);
+        },
+
+        /** 完成任务 */
         completeTask(taskId: string): void {
             tasks = tasks.map(task => {
                 if (task.id !== taskId) return task;
+
+                // 关闭当前时段（如果有）
+                const updatedSessions = task.sessions.map(session => {
+                    if (session.endTime) return session;
+                    return { ...session, endTime: new Date() };
+                });
+
                 return {
                     ...task,
-                    completed: true,
-                    endTime: new Date()
+                    status: 'completed' as const,
+                    completedAt: new Date(),
+                    sessions: updatedSessions
                 };
             });
             saveTasks(tasks);
         },
 
-        /** 取消完成任务 */
-        uncompleteTask(taskId: string): void {
-            tasks = tasks.map(task => {
-                if (task.id !== taskId) return task;
-                return {
-                    ...task,
-                    completed: false,
-                    endTime: undefined
-                };
-            });
-            saveTasks(tasks);
-        },
-
-        /** 添加 Checkpoint */
+        /** 添加 Checkpoint（只能在 active 状态添加） */
         addCheckpoint(taskId: string, input: NewCheckpointInput): Checkpoint | null {
+            const task = tasks.find(t => t.id === taskId);
+            if (!task || task.status !== 'active') return null;
+
             const newCheckpoint: Checkpoint = {
                 id: generateId(),
                 time: new Date(),
                 note: input.note
             };
 
-            let added = false;
-            tasks = tasks.map(task => {
-                if (task.id !== taskId) return task;
-                added = true;
-                return {
-                    ...task,
-                    checkpoints: [...task.checkpoints, newCheckpoint]
-                };
+            tasks = tasks.map(t => {
+                if (t.id !== taskId) return t;
+
+                // 添加到当前活跃的时段
+                const updatedSessions = t.sessions.map(session => {
+                    if (session.endTime) return session;
+                    return {
+                        ...session,
+                        checkpoints: [...session.checkpoints, newCheckpoint]
+                    };
+                });
+
+                return { ...t, sessions: updatedSessions };
             });
 
-            if (added) {
-                saveTasks(tasks);
-                return newCheckpoint;
-            }
-            return null;
+            saveTasks(tasks);
+            return newCheckpoint;
         },
 
         /** 删除任务 */
@@ -175,7 +248,10 @@ function createTaskStore() {
                 if (task.id !== taskId) return task;
                 return {
                     ...task,
-                    checkpoints: task.checkpoints.filter(cp => cp.id !== checkpointId)
+                    sessions: task.sessions.map(session => ({
+                        ...session,
+                        checkpoints: session.checkpoints.filter(cp => cp.id !== checkpointId)
+                    }))
                 };
             });
             saveTasks(tasks);

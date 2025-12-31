@@ -41,19 +41,29 @@
         const selected = taskStore.selectedDate;
         return taskStore.tasks
             .filter((task) => {
-                if (!task.completed || !task.endTime) return false;
-                const taskDate = task.startTime;
+                // 只统计该日期创建的已完成任务
+                if (task.status !== "completed") return false;
+                const taskDate = task.createdAt;
                 return (
                     taskDate.getFullYear() === selected.getFullYear() &&
                     taskDate.getMonth() === selected.getMonth() &&
                     taskDate.getDate() === selected.getDate()
                 );
             })
-            .reduce(
-                (sum, task) =>
-                    sum + (task.endTime!.getTime() - task.startTime.getTime()),
-                0,
-            );
+            .reduce((sum, task) => {
+                // 累加所有时段的时长
+                return (
+                    sum +
+                    task.sessions.reduce((sessionSum, session) => {
+                        if (!session.endTime) return sessionSum;
+                        return (
+                            sessionSum +
+                            (session.endTime.getTime() -
+                                session.startTime.getTime())
+                        );
+                    }, 0)
+                );
+            }, 0);
     });
 
     /** 格式化总时长 */
