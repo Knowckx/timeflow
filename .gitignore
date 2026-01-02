@@ -28,3 +28,6 @@ vite.config.ts.timestamp-*
 .yalc
 yalc.lock
 
+# pnpm
+dev-dist
+
