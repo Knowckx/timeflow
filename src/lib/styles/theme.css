@@ -47,6 +47,12 @@
   --tf-shadow-lg: 0 8px 32px rgba(126, 200, 227, 0.16);
   --tf-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
   
+  /* 按钮专用弥散阴影 */
+  --tf-shadow-btn-primary: 0 4px 12px rgba(126, 200, 227, 0.3);
+  --tf-shadow-btn-success: 0 4px 12px rgba(168, 230, 207, 0.4);
+  --tf-shadow-btn-warning: 0 4px 12px rgba(255, 211, 182, 0.4);
+  --tf-shadow-btn-danger: 0 4px 12px rgba(255, 170, 165, 0.4);
+  
   /* ========== 过渡动画 ========== */
   --tf-transition-fast: 150ms ease;
   --tf-transition-normal: 250ms ease;
@@ -95,7 +101,8 @@
 .tf-fab {
   position: fixed;
   bottom: var(--tf-spacing-xl);
-  right: var(--tf-spacing-xl);
+  left: 50%;
+  transform: translateX(-50%);
   width: 56px;
   height: 56px;
   border-radius: var(--tf-radius-full);
@@ -113,11 +120,11 @@
 
 .tf-fab:hover {
   background: var(--tf-primary-dark);
-  transform: scale(1.05);
+  transform: translateX(-50%) scale(1.05);
 }
 
 .tf-fab:active {
-  transform: scale(0.95);
+  transform: translateX(-50%) scale(0.95);
 }
 
 /* 时间线样式 */

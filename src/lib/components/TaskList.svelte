@@ -21,7 +21,7 @@
             <p class="empty-desc">点击右下角的 + 按钮开始记录你的工作</p>
         </div>
     {:else}
-        <div class="tf-timeline">
+        <div class="tf-timeline" role="list">
             {#each filteredTasks as task (task.id)}
                 <TaskItem {task} />
             {/each}

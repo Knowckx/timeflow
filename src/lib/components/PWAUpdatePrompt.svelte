@@ -1,32 +1,39 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { useRegisterSW } from 'virtual:pwa-register/svelte';
+	import { onMount } from "svelte";
+	import { useRegisterSW } from "virtual:pwa-register/svelte";
 
 	// 使用 prompt 模式的 SW 注册
 	const {
 		needRefresh, // 当有新 SW 可用时变为 true
-		updateServiceWorker // 调用此函数来激活新 SW
+		updateServiceWorker, // 调用此函数来激活新 SW
 	} = useRegisterSW({
 		// SW 注册成功时的回调
 		onRegisteredSW(swUrl, registration) {
-			console.log('[PWA] SW registered:', swUrl);
+			console.log("[PWA] SW registered:", swUrl);
 			// 定期检查更新 (每 60 秒)
 			if (registration) {
 				setInterval(() => {
-					console.log('[PWA] Checking for updates...');
+					console.log("[PWA] Checking for updates...");
 					registration.update();
 				}, 60 * 1000);
 			}
 		},
 		// SW 注册失败
 		onRegisterError(error) {
-			console.error('[PWA] SW registration error:', error);
-		}
+			console.error("[PWA] SW registration error:", error);
+		},
 	});
 
 	// 关闭提示
 	function closePrompt() {
 		needRefresh.set(false);
+	}
+
+	// 键盘快捷键：Esc 关闭
+	function handleKeydown(e: KeyboardEvent) {
+		if (e.key === "Escape" && $needRefresh) {
+			closePrompt();
+		}
 	}
 
 	// 用户确认更新
@@ -35,6 +42,8 @@
 	}
 </script>
 
+<svelte:window onkeydown={handleKeydown} />
+
 {#if $needRefresh}
 	<div class="pwa-toast">
 		<div class="pwa-message">
@@ -42,8 +51,12 @@
 			<p>点击更新按钮获取最新内容</p>
 		</div>
 		<div class="pwa-buttons">
-			<button class="pwa-btn pwa-btn-update" onclick={handleUpdate}>立即更新</button>
-			<button class="pwa-btn pwa-btn-close" onclick={closePrompt}>稍后再说</button>
+			<button class="pwa-btn pwa-btn-update" onclick={handleUpdate}
+				>立即更新</button
+			>
+			<button class="pwa-btn pwa-btn-close" onclick={closePrompt}
+				>稍后再说</button
+			>
 		</div>
 	</div>
 {/if}

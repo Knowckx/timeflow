@@ -97,6 +97,28 @@
         }
     }
 
+    /** 辅助：暂停任务并提示结果 */
+    function pauseAndNotify(taskId: string) {
+        const { discarded, durationSeconds } = taskStore.pauseTask(taskId);
+        if (discarded) {
+            infa.Tip.info(
+                `仅记录了 ${durationSeconds} 秒，未达到 30 秒阈值，已忽略`,
+            );
+        } else {
+            infa.Tip.success("已暂停任务");
+        }
+    }
+
+    /** 辅助：根据当前状态切换任务（开始/暂停） */
+    function toggleTaskState(task: any) {
+        if (task.status === "active") {
+            pauseAndNotify(task.id);
+        } else if (task.status === "pending" || task.status === "paused") {
+            taskStore.startTask(task.id);
+            infa.Tip.success("已开始/继续任务");
+        }
+    }
+
     /** 处理全局键盘事件 */
     function handleGlobalKeydown(e: KeyboardEvent) {
         // 如果焦点在输入框内，不处理
@@ -109,27 +131,67 @@
             return;
         }
 
-        // 空格键：切换当前任务状态（暂停/继续）
+        // 空格键：智能切换任务状态
         if (e.key === " " || e.code === "Space") {
             e.preventDefault();
+
+            // 1. 优先处理被悬停的任务
+            if (taskStore.hoveredTaskId) {
+                const hoveredTask = taskStore.tasks.find(
+                    (t) => t.id === taskStore.hoveredTaskId,
+                );
+                if (hoveredTask) {
+                    toggleTaskState(hoveredTask);
+                    return;
+                }
+            }
+
+            // 2. 其次处理被选中的任务
+            if (taskStore.selectedTaskId) {
+                const selectedTask = taskStore.tasks.find(
+                    (t) => t.id === taskStore.selectedTaskId,
+                );
+                if (selectedTask) {
+                    toggleTaskState(selectedTask);
+                    return;
+                }
+            }
+
+            // 3. 没有悬停和选中时，如果当前有进行中的任务，则暂停它
             const activeTask = taskStore.getActiveTask();
             if (activeTask) {
-                // 有进行中的任务，暂停它
-                const { discarded } = taskStore.pauseTask(activeTask.id);
-                if (discarded) {
-                    infa.Tip.info("时段太短，已忽略");
-                } else {
-                    infa.Tip.success("已暂停任务");
-                }
-            } else {
-                // 没有进行中的任务，继续最近暂停的任务
-                const pausedTask = taskStore.tasks.find(
-                    (t) => t.status === "paused",
+                pauseAndNotify(activeTask.id);
+                return;
+            }
+
+            // 4. 最后，开始当前视图（日期）下最后创建的一个未开始/已暂停任务
+            const selected = taskStore.selectedDate;
+            const currentViewTasks = taskStore.tasks.filter((t) => {
+                const d = t.createdAt;
+                return (
+                    d.getFullYear() === selected.getFullYear() &&
+                    d.getMonth() === selected.getMonth() &&
+                    d.getDate() === selected.getDate()
                 );
-                if (pausedTask) {
-                    taskStore.startTask(pausedTask.id);
-                    infa.Tip.success("已继续任务");
-                }
+            });
+
+            // 找到最后一个非已完成的任务（倒序找最新的）
+            const latestTask = currentViewTasks.find(
+                (t) => t.status === "pending" || t.status === "paused",
+            );
+
+            if (latestTask) {
+                taskStore.startTask(latestTask.id);
+                infa.Tip.success("已自动开始最新任务");
+            }
+        }
+
+        // 处理回车键：快速添加 Checkpoint
+        if (e.key === "Enter") {
+            const activeTask = taskStore.getActiveTask();
+            if (activeTask) {
+                e.preventDefault();
+                taskStore.triggerCheckpointFocus(activeTask.id);
             }
         }
     }
@@ -195,7 +257,7 @@
                         >
                         {#if !isShowingToday}
                             <button
-                                class="today-link"
+                                class="today-btn"
                                 onclick={() => taskStore.resetToToday()}
                             >
                                 回到今天
@@ -300,20 +362,21 @@
         display: flex;
         align-items: center;
         gap: var(--tf-spacing-xs);
-        padding: var(--tf-spacing-sm) var(--tf-spacing-md);
-        background: var(--tf-primary-light);
-        color: var(--tf-primary-dark);
+        background: var(--tf-primary);
+        color: white;
         border: none;
-        border-radius: var(--tf-radius-lg);
-        font-size: 0.875rem;
-        font-weight: 500;
+        border-radius: var(--tf-radius-md);
+        padding: var(--tf-spacing-sm) var(--tf-spacing-md);
+        font-weight: 600;
         cursor: pointer;
         transition: all var(--tf-transition-fast);
+        box-shadow: var(--tf-shadow-btn-primary);
     }
 
     .export-btn:hover {
-        background: var(--tf-primary);
-        color: white;
+        background: var(--tf-primary-dark);
+        transform: translateY(-1px);
+        box-shadow: var(--tf-shadow-lg);
     }
 
     .header-info {
@@ -332,24 +395,25 @@
     }
 
     .date-nav-btn {
+        background: var(--tf-bg-card);
+        border: 1px solid var(--tf-border);
+        border-radius: var(--tf-radius-md);
+        width: 36px;
+        height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 32px;
-        height: 32px;
-        padding: 0;
-        background: var(--tf-bg-secondary);
-        border: 1px solid var(--tf-border);
-        border-radius: var(--tf-radius-full);
-        color: var(--tf-text-secondary);
         cursor: pointer;
+        color: var(--tf-text-secondary);
         transition: all var(--tf-transition-fast);
+        box-shadow: var(--tf-shadow-sm);
     }
 
     .date-nav-btn:hover {
-        background: var(--tf-primary-light);
-        color: var(--tf-primary-dark);
-        border-color: var(--tf-primary-light);
+        border-color: var(--tf-primary);
+        color: var(--tf-primary);
+        transform: translateY(-1px);
+        box-shadow: var(--tf-shadow-md);
     }
 
     .date-display {
@@ -365,21 +429,23 @@
         margin: 0;
     }
 
-    .today-link {
-        padding: 2px 8px;
-        background: var(--tf-primary-light);
-        color: var(--tf-primary);
+    .today-btn {
+        background: var(--tf-accent-orange);
+        color: #b7791f;
         border: none;
-        border-radius: var(--tf-radius-sm);
-        font-size: 0.7rem;
-        font-weight: 500;
+        border-radius: var(--tf-radius-full);
+        padding: var(--tf-spacing-xs) var(--tf-spacing-md);
+        font-size: 0.75rem;
+        font-weight: 600;
         cursor: pointer;
         transition: all var(--tf-transition-fast);
+        box-shadow: var(--tf-shadow-btn-warning);
     }
 
-    .today-link:hover {
-        background: var(--tf-primary);
-        color: white;
+    .today-btn:hover {
+        background: #fbd38d;
+        transform: scale(1.05);
+        box-shadow: 0 4px 12px rgba(251, 211, 141, 0.4);
     }
 
     .total-time {

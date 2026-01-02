@@ -35,6 +35,7 @@
     }
 
     function handleKeydown(e: KeyboardEvent) {
+        if (!open) return;
         if (e.key === "Escape") {
             handleCancel();
         }

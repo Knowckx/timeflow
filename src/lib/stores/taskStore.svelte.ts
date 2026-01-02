@@ -69,6 +69,9 @@ function createTaskStore() {
     let tasks = $state<Task[]>([]);
     let initialized = $state(false);
     let selectedDate = $state<Date>(new Date());
+    let hoveredTaskId = $state<string | null>(null);
+    let selectedTaskId = $state<string | null>(null);
+    let checkpointFocusSignal = $state<{ taskId: string; timestamp: number } | null>(null);
 
     return {
         /** 获取所有任务 */
@@ -84,6 +87,36 @@ function createTaskStore() {
         /** 获取当前选中的日期 */
         get selectedDate() {
             return selectedDate;
+        },
+
+        /** 当前所悬停的任务 ID */
+        get hoveredTaskId() {
+            return hoveredTaskId;
+        },
+
+        /** 设置当前悬停的任务 ID */
+        setHoveredTaskId(id: string | null) {
+            hoveredTaskId = id;
+        },
+
+        /** 当前所选中的任务 ID */
+        get selectedTaskId() {
+            return selectedTaskId;
+        },
+
+        /** 设置当前选中的任务 ID */
+        setSelectedTaskId(id: string | null) {
+            selectedTaskId = id;
+        },
+
+        /** 获取聚焦信号 */
+        get checkpointFocusSignal() {
+            return checkpointFocusSignal;
+        },
+
+        /** 触发特定任务的 Checkpoint 输入框聚焦 */
+        triggerCheckpointFocus(taskId: string) {
+            checkpointFocusSignal = { taskId, timestamp: Date.now() };
         },
 
         /** 初始化（从 localStorage 加载） */
@@ -160,9 +193,10 @@ function createTaskStore() {
             saveTasks(tasks);
         },
 
-        /** 暂停任务，返回是否丢弃了过短的时段 */
-        pauseTask(taskId: string): { discarded: boolean } {
+        /** 暂停任务，返回是否丢弃了过短的时段及实际时长（秒） */
+        pauseTask(taskId: string): { discarded: boolean, durationSeconds: number } {
             let discarded = false;
+            let durationSeconds = 0;
 
             tasks = tasks.map(task => {
                 if (task.id !== taskId) return task;
@@ -172,10 +206,11 @@ function createTaskStore() {
                 const currentSession = task.sessions.find(s => !s.endTime);
                 if (!currentSession) return task;
 
-                const duration = Date.now() - currentSession.startTime.getTime();
+                const durationMs = Date.now() - currentSession.startTime.getTime();
+                durationSeconds = Math.floor(durationMs / 1000);
 
                 // 时段太短，丢弃它
-                if (duration < config.MIN_SESSION_DURATION_MS) {
+                if (durationMs < config.MIN_SESSION_DURATION_MS) {
                     discarded = true;
                     const remainingSessions = task.sessions.filter(s => s.id !== currentSession.id);
                     return {
@@ -199,7 +234,7 @@ function createTaskStore() {
                 };
             });
             saveTasks(tasks);
-            return { discarded };
+            return { discarded, durationSeconds };
         },
 
         /** 继续任务（创建新时段） */

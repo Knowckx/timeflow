@@ -2,6 +2,7 @@
 <script lang="ts">
     import "$lib/styles/theme.css";
     import { taskStore } from "$lib/stores/taskStore.svelte";
+    import infa from "infa-s5";
 
     let inputValue = $state("");
     let inputRef: HTMLInputElement | undefined = $state();
@@ -14,17 +15,6 @@
         taskStore.addTask({ title: trimmed });
         inputValue = "";
         isExpanded = false;
-    }
-
-    function handleKeydown(e: KeyboardEvent) {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            handleSubmit();
-        }
-        if (e.key === "Escape") {
-            isExpanded = false;
-            inputValue = "";
-        }
     }
 
     function handleFabClick() {
@@ -47,8 +37,17 @@
             return;
         }
 
-        // Enter 键展开输入框
-        if (e.key === "Enter") {
+        // Enter 键：仅在没有运行中的任务时展开新任务输入
+        if (e.key === "Enter" && !e.shiftKey) {
+            const activeTask = taskStore.getActiveTask();
+            if (!activeTask) {
+                e.preventDefault();
+                handleFabClick();
+            }
+        }
+
+        // Shift + Enter：强制展开新任务输入
+        if (e.key === "Enter" && e.shiftKey) {
             e.preventDefault();
             handleFabClick();
         }
@@ -62,13 +61,17 @@
 {#if isExpanded}
     <div class="task-input-wrapper">
         <div class="task-input-card">
-            <input
-                bind:this={inputRef}
+            <infa.Input
                 bind:value={inputValue}
-                onkeydown={handleKeydown}
-                class="tf-input"
+                onCommit={handleSubmit}
+                onkeydown={(e) => {
+                    if (e.key === "Escape") {
+                        isExpanded = false;
+                        inputValue = "";
+                    }
+                }}
                 placeholder="输入新任务，按 Enter 确认..."
-                autocomplete="off"
+                autoFocus={true}
             />
             <div class="task-input-actions">
                 <button

@@ -18,9 +18,24 @@
 
     let showCheckpointInput = $state(false);
     let checkpointNote = $state("");
-    let checkpointInputRef: HTMLInputElement | undefined = $state();
     let showSessions = $state(false);
     let showConfirmDialog = $state(false);
+
+    // 任务变为进行中时，自动展开时段列表
+    $effect(() => {
+        if (task.status === "active") {
+            showSessions = true;
+        }
+    });
+
+    // 响应全局快捷键：显示 Checkpoint 输入框
+    $effect(() => {
+        const signal = taskStore.checkpointFocusSignal;
+        if (signal && signal.taskId === task.id) {
+            showCheckpointInput = true;
+            // 因为 infa.Input 设置了 autoFocus={true}，这里只需负责展开即可
+        }
+    });
 
     // 状态显示文字
     const statusText = $derived.by(() => {
@@ -95,9 +110,11 @@
     }
 
     function handlePause() {
-        const { discarded } = taskStore.pauseTask(task.id);
+        const { discarded, durationSeconds } = taskStore.pauseTask(task.id);
         if (discarded) {
-            infa.Tip.info("时段太短，已忽略");
+            infa.Tip.info(
+                `仅记录了 ${durationSeconds} 秒，未达到 30 秒阈值，已忽略`,
+            );
         }
     }
 
@@ -111,7 +128,6 @@
 
     function handleAddCheckpoint() {
         showCheckpointInput = true;
-        setTimeout(() => checkpointInputRef?.focus(), 50);
     }
 
     function handleSubmitCheckpoint() {
@@ -121,17 +137,6 @@
         taskStore.addCheckpoint(task.id, { note: trimmed });
         checkpointNote = "";
         showCheckpointInput = false;
-    }
-
-    function handleCheckpointKeydown(e: KeyboardEvent) {
-        if (e.key === "Enter") {
-            e.preventDefault();
-            handleSubmitCheckpoint();
-        }
-        if (e.key === "Escape") {
-            showCheckpointInput = false;
-            checkpointNote = "";
-        }
     }
 
     function handleDeleteCheckpoint(checkpointId: string) {
@@ -160,7 +165,21 @@
     }
 </script>
 
-<div class="task-item tf-card" class:completed={task.status === "completed"}>
+<div
+    class="task-item tf-card"
+    class:completed={task.status === "completed"}
+    class:selected={taskStore.selectedTaskId === task.id}
+    onmouseenter={() => taskStore.setHoveredTaskId(task.id)}
+    onmouseleave={() => taskStore.setHoveredTaskId(null)}
+    onclick={() => taskStore.setSelectedTaskId(task.id)}
+    onkeydown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+            taskStore.setSelectedTaskId(task.id);
+        }
+    }}
+    tabindex="0"
+    role="listitem"
+>
     <!-- 时间线指示点 -->
     <div
         class="tf-timeline-dot"
@@ -193,11 +212,14 @@
             </div>
         </div>
 
-        <div class="task-actions">
+        <div class="task-actions" onclick={(e) => e.stopPropagation()}>
             {#if task.status === "pending"}
                 <button
                     class="action-btn action-btn-start"
-                    onclick={handleStart}
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        handleStart();
+                    }}
                     title="开始任务"
                 >
                     ▶ 开始
@@ -205,21 +227,30 @@
             {:else if task.status === "active"}
                 <button
                     class="action-btn"
-                    onclick={handleAddCheckpoint}
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        handleAddCheckpoint();
+                    }}
                     title="添加记录点"
                 >
                     📝
                 </button>
                 <button
                     class="action-btn action-btn-pause"
-                    onclick={handlePause}
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        handlePause();
+                    }}
                     title="暂停任务"
                 >
                     ⏸ 暂停
                 </button>
                 <button
                     class="action-btn action-btn-complete"
-                    onclick={handleComplete}
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        handleComplete();
+                    }}
                     title="完成任务"
                 >
                     ✓ 完成
@@ -227,14 +258,20 @@
             {:else if task.status === "paused"}
                 <button
                     class="action-btn action-btn-start"
-                    onclick={handleResume}
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        handleResume();
+                    }}
                     title="继续任务"
                 >
                     ▶ 继续
                 </button>
                 <button
                     class="action-btn action-btn-complete"
-                    onclick={handleComplete}
+                    onclick={(e) => {
+                        e.stopPropagation();
+                        handleComplete();
+                    }}
                     title="完成任务"
                 >
                     ✓ 完成
@@ -242,7 +279,10 @@
             {/if}
             <button
                 class="action-btn action-btn-delete"
-                onclick={handleDeleteTask}
+                onclick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteTask();
+                }}
                 title="删除任务"
             >
                 🗑
@@ -292,16 +332,18 @@
     <!-- Checkpoint 输入 -->
     {#if showCheckpointInput}
         <div class="checkpoint-input-wrapper">
-            <input
-                bind:this={checkpointInputRef}
+            <infa.Input
                 bind:value={checkpointNote}
-                onkeydown={handleCheckpointKeydown}
-                class="checkpoint-input"
+                onCommit={handleSubmitCheckpoint}
+                onkeydown={(e) => {
+                    if (e.key === "Escape") {
+                        showCheckpointInput = false;
+                        checkpointNote = "";
+                    }
+                }}
                 placeholder="记录当前进度..."
+                autoFocus={true}
             />
-            <button class="checkpoint-submit" onclick={handleSubmitCheckpoint}>
-                添加
-            </button>
         </div>
     {/if}
 </div>
@@ -326,6 +368,13 @@
 
     .task-item.completed {
         opacity: 0.7;
+    }
+
+    .task-item.selected {
+        background: var(--tf-primary-light);
+        border-color: var(--tf-primary);
+        box-shadow: var(--tf-shadow-md);
+        transform: translateY(-2px);
     }
 
     .task-header {
@@ -428,44 +477,54 @@
         transition: all var(--tf-transition-fast);
         font-size: 0.75rem;
         white-space: nowrap;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
     }
 
     .action-btn:hover {
         background: var(--tf-primary-light);
         color: var(--tf-primary-dark);
+        box-shadow: var(--tf-shadow-btn-primary);
+        transform: translateY(-1px);
     }
 
     .action-btn-start {
         background: var(--tf-accent-green);
         color: #166534;
+        box-shadow: var(--tf-shadow-btn-success);
     }
 
     .action-btn-start:hover {
         background: #86efac;
+        box-shadow: 0 6px 16px rgba(134, 239, 172, 0.5);
     }
 
     .action-btn-pause {
         background: var(--tf-accent-yellow);
         color: #92400e;
+        box-shadow: var(--tf-shadow-btn-warning);
     }
 
     .action-btn-pause:hover {
         background: #fde047;
+        box-shadow: 0 6px 16px rgba(253, 224, 71, 0.5);
     }
 
     .action-btn-complete {
-        background: var(--tf-primary-light);
-        color: var(--tf-primary-dark);
+        background: var(--tf-primary);
+        color: white;
+        box-shadow: var(--tf-shadow-btn-primary);
     }
 
     .action-btn-complete:hover {
         background: var(--tf-primary);
         color: white;
+        box-shadow: var(--tf-shadow-lg);
     }
 
     .action-btn-delete:hover {
         background: var(--tf-accent-pink);
         color: #9b2c2c;
+        box-shadow: var(--tf-shadow-btn-danger);
     }
 
     .sessions-toggle {
