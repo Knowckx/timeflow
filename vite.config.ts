@@ -18,8 +18,8 @@ export default defineConfig({
             includeAssets: ['pwa-512x512.png'],
             strategies: 'generateSW', // 使用 generateSW 策略
             workbox: {
-                // 预缓存所有静态资源（不包括 html，因为 SvelteKit 页面是动态生成的）
-                globPatterns: ['**/*.{js,css,ico,png,svg,webp,woff,woff2,ttf,eot,json}'],
+                // 仅在生产环境或特定需求下进行预缓存，避免开发环境下文件夹不存在的警告
+                globPatterns: process.env.NODE_ENV === 'production' ? ['**/*.{js,css,ico,png,svg,webp,woff,woff2,ttf,eot,json}'] : [],
                 // 关键：禁用 navigateFallback，避免 non-precached-url 错误
                 navigateFallback: null,
                 // 自动清理过期缓存。新版本部署后，自动删除旧版本的缓存
@@ -97,6 +97,10 @@ export default defineConfig({
     // ✅ 必须 - 禁用客户端预构建本地包的缓存
     optimizeDeps: {
         exclude: ['infa-s5']
+    },
+    // ✅ 必须 - 处理 SSR 时的本地包
+    ssr: {
+        noExternal: ['infa-s5']
     },
     server: {
         https: {},
