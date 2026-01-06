@@ -338,11 +338,8 @@
             <infa.Input
                 bind:value={checkpointNote}
                 onCommit={handleSubmitCheckpoint}
-                onkeydown={(e) => {
-                    if (e.key === "Escape") {
-                        showCheckpointInput = false;
-                        checkpointNote = "";
-                    }
+                onEscape={() => {
+                    showCheckpointInput = false;
                 }}
                 placeholder="记录当前进度..."
                 autoFocus={true}

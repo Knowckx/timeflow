@@ -64,11 +64,8 @@
             <infa.Input
                 bind:value={inputValue}
                 onCommit={handleSubmit}
-                onkeydown={(e) => {
-                    if (e.key === "Escape") {
-                        isExpanded = false;
-                        inputValue = "";
-                    }
+                onEscape={() => {
+                    isExpanded = false;
                 }}
                 placeholder="输入新任务，按 Enter 确认..."
                 autoFocus={true}
