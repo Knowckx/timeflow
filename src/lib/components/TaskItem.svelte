@@ -178,7 +178,8 @@
         }
     }}
     tabindex="0"
-    role="listitem"
+    role="button"
+    aria-pressed={taskStore.selectedTaskId === task.id}
 >
     <!-- 时间线指示点 -->
     <div
@@ -212,6 +213,8 @@
             </div>
         </div>
 
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
         <div class="task-actions" onclick={(e) => e.stopPropagation()}>
             {#if task.status === "pending"}
                 <button
