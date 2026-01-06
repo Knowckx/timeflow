@@ -10,9 +10,11 @@ export default defineConfig({
         tailwindcss(),
         mkcert(),
         SvelteKitPWA({
-            disable: false, // 允许在开发环境运行，以提供 manifest 文件
+            disable: process.env.NODE_ENV !== 'production', // 开发模式完全禁用 PWA
             devOptions: {
-                enabled: true,
+                enabled: false, // 开发模式不启用 service worker
+                suppressWarnings: true, // 抑制警告
+                type: 'module', // 使用 ES module 格式，便于调试
             },
             registerType: 'prompt', // prompt 模式：有新内容时触发事件，允许我们在 UI 上弹窗提示用户手动更新
             includeAssets: ['pwa-512x512.png'],
