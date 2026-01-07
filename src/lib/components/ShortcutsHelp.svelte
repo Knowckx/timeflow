@@ -59,11 +59,16 @@
                     <span class="title-icon">⌨️</span>
                     快捷键
                 </h2>
-                <button class="close-btn" onclick={onClose} aria-label="返回">
+                <button
+                    class="tf-btn tf-btn-ghost"
+                    onclick={onClose}
+                    aria-label="返回"
+                    style="width: 36px; padding: 0;"
+                >
                     <svg
-                        width="30"
-                        height="30"
-                        viewBox="0 0 30 30"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
                         stroke-width="2"
@@ -161,35 +166,6 @@
         border-bottom: 1px solid var(--tf-border);
     }
 
-    .panel-title {
-        display: flex;
-        align-items: center;
-        gap: var(--tf-spacing-sm);
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--tf-text);
-        margin: 0;
-    }
-
-    .title-icon {
-        font-size: 1.5rem;
-    }
-
-    .close-btn {
-        background: none;
-        border: none;
-        color: var(--tf-text-secondary);
-        cursor: pointer;
-        padding: var(--tf-spacing-xs);
-        border-radius: var(--tf-radius-sm);
-        transition: all var(--tf-transition-fast);
-    }
-
-    .close-btn:hover {
-        background: var(--tf-bg-secondary);
-        color: var(--tf-text);
-    }
-
     .panel-content {
         padding: var(--tf-spacing-lg);
         overflow-y: auto;
@@ -239,14 +215,10 @@
         min-width: 28px;
         height: 28px;
         padding: 0 var(--tf-spacing-sm);
-        background: linear-gradient(
-            180deg,
-            var(--tf-bg) 0%,
-            var(--tf-bg-secondary) 100%
-        );
+        background: white;
         border: 1px solid var(--tf-border);
         border-radius: var(--tf-radius-sm);
-        font-family: "SF Mono", "Consolas", monospace;
+        font-family: var(--tf-font-mono);
         font-size: 0.75rem;
         font-weight: 500;
         color: var(--tf-text);

@@ -222,7 +222,7 @@
         <div class="task-actions" onclick={(e) => e.stopPropagation()}>
             {#if task.status === "pending"}
                 <button
-                    class="action-btn action-btn-start"
+                    class="tf-btn tf-btn-success"
                     onclick={(e) => {
                         e.stopPropagation();
                         handleStart();
@@ -233,7 +233,7 @@
                 </button>
             {:else if task.status === "active"}
                 <button
-                    class="action-btn"
+                    class="tf-btn tf-btn-ghost"
                     onclick={(e) => {
                         e.stopPropagation();
                         handleAddCheckpoint();
@@ -243,7 +243,7 @@
                     📝
                 </button>
                 <button
-                    class="action-btn action-btn-pause"
+                    class="tf-btn tf-btn-warning"
                     onclick={(e) => {
                         e.stopPropagation();
                         handlePause();
@@ -253,7 +253,7 @@
                     ⏸ 暂停
                 </button>
                 <button
-                    class="action-btn action-btn-complete"
+                    class="tf-btn tf-btn-primary"
                     onclick={(e) => {
                         e.stopPropagation();
                         handleComplete();
@@ -264,7 +264,7 @@
                 </button>
             {:else if task.status === "paused"}
                 <button
-                    class="action-btn action-btn-start"
+                    class="tf-btn tf-btn-success"
                     onclick={(e) => {
                         e.stopPropagation();
                         handleResume();
@@ -274,7 +274,7 @@
                     ▶ 继续
                 </button>
                 <button
-                    class="action-btn action-btn-complete"
+                    class="tf-btn tf-btn-primary"
                     onclick={(e) => {
                         e.stopPropagation();
                         handleComplete();
@@ -285,7 +285,7 @@
                 </button>
             {/if}
             <button
-                class="action-btn action-btn-delete"
+                class="tf-btn tf-btn-danger"
                 onclick={(e) => {
                     e.stopPropagation();
                     handleDeleteTask();
@@ -469,84 +469,6 @@
         opacity: 0;
         transition: opacity var(--tf-transition-fast);
         flex-wrap: wrap;
-    }
-
-    .task-item:hover .task-actions {
-        opacity: 1;
-    }
-
-    .action-btn {
-        /* 统一基础样式 */
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        gap: 4px;
-        min-height: 36px;
-        padding: var(--tf-spacing-sm) var(--tf-spacing-md);
-        border: none;
-        border-radius: var(--tf-radius-md);
-        font-size: 0.875rem;
-        font-weight: 500;
-        white-space: nowrap;
-        cursor: pointer;
-        transition: all var(--tf-transition-fast);
-        /* 默认：功能按钮样式 */
-        background: var(--tf-bg-secondary);
-        color: var(--tf-text-secondary);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-    }
-
-    .action-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--tf-shadow-md);
-    }
-
-    /* 主操作：开始/继续 - 最醒目 */
-    .action-btn-start {
-        background: var(--tf-accent-green);
-        color: #166534;
-        box-shadow: var(--tf-shadow-btn-success);
-    }
-
-    .action-btn-start:hover {
-        background: #86efac;
-        box-shadow: 0 6px 20px rgba(134, 239, 172, 0.5);
-    }
-
-    /* 次操作：暂停 */
-    .action-btn-pause {
-        background: var(--tf-accent-yellow);
-        color: #92400e;
-        box-shadow: var(--tf-shadow-btn-warning);
-    }
-
-    .action-btn-pause:hover {
-        background: #fde047;
-        box-shadow: 0 6px 20px rgba(253, 224, 71, 0.5);
-    }
-
-    /* 次操作：完成 */
-    .action-btn-complete {
-        background: var(--tf-primary);
-        color: white;
-        box-shadow: var(--tf-shadow-btn-primary);
-    }
-
-    .action-btn-complete:hover {
-        background: var(--tf-primary-dark);
-        box-shadow: 0 6px 20px rgba(126, 200, 227, 0.5);
-    }
-
-    /* 危险操作：删除 - 默认低调，hover 变红 */
-    .action-btn-delete {
-        background: var(--tf-bg-secondary);
-        color: var(--tf-text-muted);
-    }
-
-    .action-btn-delete:hover {
-        background: var(--tf-accent-pink);
-        color: #9b2c2c;
-        box-shadow: var(--tf-shadow-btn-danger);
     }
 
     .sessions-toggle {

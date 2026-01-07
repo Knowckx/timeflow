@@ -52,16 +52,10 @@
             <h3 class="dialog-title">{title}</h3>
             <p class="dialog-message">{message}</p>
             <div class="dialog-actions">
-                <button
-                    class="dialog-btn dialog-btn-cancel"
-                    onclick={handleCancel}
-                >
+                <button class="tf-btn tf-btn-secondary" onclick={handleCancel}>
                     {cancelText}
                 </button>
-                <button
-                    class="dialog-btn dialog-btn-confirm"
-                    onclick={handleConfirm}
-                >
+                <button class="tf-btn tf-btn-primary" onclick={handleConfirm}>
                     {confirmText}
                 </button>
             </div>
@@ -129,34 +123,5 @@
         display: flex;
         gap: var(--tf-spacing-sm);
         justify-content: flex-end;
-    }
-
-    .dialog-btn {
-        padding: var(--tf-spacing-sm) var(--tf-spacing-lg);
-        border-radius: var(--tf-radius-lg);
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all var(--tf-transition-fast);
-    }
-
-    .dialog-btn-cancel {
-        background: var(--tf-bg-secondary);
-        border: 1px solid var(--tf-border);
-        color: var(--tf-text-secondary);
-    }
-
-    .dialog-btn-cancel:hover {
-        background: var(--tf-border);
-    }
-
-    .dialog-btn-confirm {
-        background: var(--tf-primary);
-        border: none;
-        color: white;
-    }
-
-    .dialog-btn-confirm:hover {
-        background: var(--tf-primary-dark);
     }
 </style>

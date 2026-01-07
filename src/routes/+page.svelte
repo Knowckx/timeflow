@@ -318,9 +318,10 @@
                 </h1>
                 <div class="header-actions">
                     <button
-                        class="help-btn"
+                        class="tf-btn tf-btn-ghost"
                         onclick={() => (showShortcutsHelp = true)}
                         title="快捷键帮助"
+                        style="width: 36px; padding: 0;"
                     >
                         <svg
                             width="18"
@@ -336,7 +337,7 @@
                         </svg>
                     </button>
                     <button
-                        class="export-btn"
+                        class="tf-btn tf-btn-primary"
                         onclick={handleExport}
                         title="导出今日记录为 Markdown"
                     >
@@ -359,9 +360,10 @@
             <div class="header-info">
                 <div class="date-nav">
                     <button
-                        class="date-nav-btn"
+                        class="tf-btn tf-btn-secondary"
                         onclick={() => taskStore.goToPreviousDay()}
                         title="前一天"
+                        style="width: 36px; padding: 0;"
                     >
                         <svg
                             width="16"
@@ -382,15 +384,17 @@
                             <button
                                 class="today-btn"
                                 onclick={() => taskStore.resetToToday()}
+                                style="margin-top: 4px;"
                             >
                                 回到今天
                             </button>
                         {/if}
                     </div>
                     <button
-                        class="date-nav-btn"
+                        class="tf-btn tf-btn-secondary"
                         onclick={() => taskStore.goToNextDay()}
                         title="后一天"
+                        style="width: 36px; padding: 0;"
                     >
                         <svg
                             width="16"
@@ -502,88 +506,6 @@
         display: flex;
         align-items: center;
         gap: var(--tf-spacing-sm);
-    }
-
-    .help-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--tf-bg-secondary);
-        color: var(--tf-text-secondary);
-        border: 1px solid var(--tf-border);
-        border-radius: var(--tf-radius-md);
-        /* 方形按钮，宽高相等 */
-        width: 38px;
-        height: 38px;
-        padding: 0;
-        cursor: pointer;
-        transition: all var(--tf-transition-fast);
-    }
-
-    .help-btn:hover {
-        background: var(--tf-primary-light);
-        color: var(--tf-primary-dark);
-        border-color: var(--tf-primary);
-        transform: translateY(-1px);
-        box-shadow: var(--tf-shadow-sm);
-    }
-
-    .export-btn {
-        display: flex;
-        align-items: center;
-        gap: var(--tf-spacing-xs);
-        background: var(--tf-primary);
-        color: white;
-        border: none;
-        border-radius: var(--tf-radius-md);
-        padding: var(--tf-spacing-sm) var(--tf-spacing-md);
-        font-weight: 600;
-        cursor: pointer;
-        transition: all var(--tf-transition-fast);
-        box-shadow: var(--tf-shadow-btn-primary);
-    }
-
-    .export-btn:hover {
-        background: var(--tf-primary-dark);
-        transform: translateY(-1px);
-        box-shadow: var(--tf-shadow-lg);
-    }
-
-    .header-info {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: var(--tf-spacing-sm);
-        margin-top: var(--tf-spacing-sm);
-    }
-
-    .date-nav {
-        display: flex;
-        align-items: center;
-        gap: var(--tf-spacing-xs);
-    }
-
-    .date-nav-btn {
-        background: var(--tf-bg-card);
-        border: 1px solid var(--tf-border);
-        border-radius: var(--tf-radius-md);
-        width: 36px;
-        height: 36px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        color: var(--tf-text-secondary);
-        transition: all var(--tf-transition-fast);
-        box-shadow: var(--tf-shadow-sm);
-    }
-
-    .date-nav-btn:hover {
-        border-color: var(--tf-primary);
-        color: var(--tf-primary);
-        transform: translateY(-1px);
-        box-shadow: var(--tf-shadow-md);
     }
 
     .date-display {

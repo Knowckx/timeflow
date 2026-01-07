@@ -76,7 +76,7 @@
             />
             <div class="task-input-actions">
                 <button
-                    class="btn-cancel"
+                    class="tf-btn tf-btn-secondary"
                     onclick={() => {
                         isExpanded = false;
                         inputValue = "";
@@ -85,7 +85,7 @@
                     取消
                 </button>
                 <button
-                    class="btn-add"
+                    class="tf-btn tf-btn-primary"
                     onclick={handleSubmit}
                     disabled={!inputValue.trim()}
                 >
@@ -138,39 +138,5 @@
         justify-content: flex-end;
         gap: var(--tf-spacing-sm);
         margin-top: var(--tf-spacing-md);
-    }
-
-    .btn-cancel,
-    .btn-add {
-        padding: var(--tf-spacing-sm) var(--tf-spacing-lg);
-        border-radius: var(--tf-radius-lg);
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all var(--tf-transition-fast);
-        border: none;
-    }
-
-    .btn-cancel {
-        background: var(--tf-bg-secondary);
-        color: var(--tf-text-secondary);
-    }
-
-    .btn-cancel:hover {
-        background: var(--tf-border);
-    }
-
-    .btn-add {
-        background: var(--tf-primary);
-        color: white;
-    }
-
-    .btn-add:hover:not(:disabled) {
-        background: var(--tf-primary-dark);
-    }
-
-    .btn-add:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
     }
 </style>
