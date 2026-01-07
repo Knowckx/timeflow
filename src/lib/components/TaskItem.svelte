@@ -113,7 +113,7 @@
         const { discarded, durationSeconds } = taskStore.pauseTask(task.id);
         if (discarded) {
             infa.Tip.info(
-                `仅记录了 ${durationSeconds} 秒，未达到 30 秒阈值，已忽略`,
+                `仅记录了 ${durationSeconds} 秒，未达到 10 秒阈值，已忽略`,
             );
         }
     }
@@ -132,7 +132,11 @@
 
     function handleSubmitCheckpoint() {
         const trimmed = checkpointNote.trim();
-        if (!trimmed) return;
+        if (!trimmed) {
+            // 空输入时按 Enter 等于关闭输入框
+            showCheckpointInput = false;
+            return;
+        }
 
         taskStore.addCheckpoint(task.id, { note: trimmed });
         checkpointNote = "";
@@ -371,10 +375,14 @@
     }
 
     .task-item.selected {
-        background: var(--tf-primary-light);
-        border-color: var(--tf-primary);
-        box-shadow: var(--tf-shadow-md);
-        transform: translateY(-2px);
+        /* 保持原背景色，不做大面积改色 */
+        background: var(--tf-bg-card);
+        /* 更强的弥散阴影，增加漂浮凸起感 */
+        box-shadow:
+            0 8px 24px rgba(126, 200, 227, 0.25),
+            0 4px 12px rgba(0, 0, 0, 0.08);
+        /* 更明显的向上漂浮 */
+        transform: translateY(-4px);
     }
 
     .task-header {
@@ -468,25 +476,32 @@
     }
 
     .action-btn {
-        background: var(--tf-bg-secondary);
+        /* 统一基础样式 */
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
+        min-height: 36px;
+        padding: var(--tf-spacing-sm) var(--tf-spacing-md);
         border: none;
         border-radius: var(--tf-radius-md);
-        padding: var(--tf-spacing-xs) var(--tf-spacing-sm);
-        cursor: pointer;
-        color: var(--tf-text-secondary);
-        transition: all var(--tf-transition-fast);
-        font-size: 0.75rem;
+        font-size: 0.875rem;
+        font-weight: 500;
         white-space: nowrap;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+        cursor: pointer;
+        transition: all var(--tf-transition-fast);
+        /* 默认：功能按钮样式 */
+        background: var(--tf-bg-secondary);
+        color: var(--tf-text-secondary);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
     }
 
     .action-btn:hover {
-        background: var(--tf-primary-light);
-        color: var(--tf-primary-dark);
-        box-shadow: var(--tf-shadow-btn-primary);
-        transform: translateY(-1px);
+        transform: translateY(-2px);
+        box-shadow: var(--tf-shadow-md);
     }
 
+    /* 主操作：开始/继续 - 最醒目 */
     .action-btn-start {
         background: var(--tf-accent-green);
         color: #166534;
@@ -495,9 +510,10 @@
 
     .action-btn-start:hover {
         background: #86efac;
-        box-shadow: 0 6px 16px rgba(134, 239, 172, 0.5);
+        box-shadow: 0 6px 20px rgba(134, 239, 172, 0.5);
     }
 
+    /* 次操作：暂停 */
     .action-btn-pause {
         background: var(--tf-accent-yellow);
         color: #92400e;
@@ -506,9 +522,10 @@
 
     .action-btn-pause:hover {
         background: #fde047;
-        box-shadow: 0 6px 16px rgba(253, 224, 71, 0.5);
+        box-shadow: 0 6px 20px rgba(253, 224, 71, 0.5);
     }
 
+    /* 次操作：完成 */
     .action-btn-complete {
         background: var(--tf-primary);
         color: white;
@@ -516,9 +533,14 @@
     }
 
     .action-btn-complete:hover {
-        background: var(--tf-primary);
-        color: white;
-        box-shadow: var(--tf-shadow-lg);
+        background: var(--tf-primary-dark);
+        box-shadow: 0 6px 20px rgba(126, 200, 227, 0.5);
+    }
+
+    /* 危险操作：删除 - 默认低调，hover 变红 */
+    .action-btn-delete {
+        background: var(--tf-bg-secondary);
+        color: var(--tf-text-muted);
     }
 
     .action-btn-delete:hover {

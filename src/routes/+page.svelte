@@ -3,9 +3,15 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
     import "$lib/styles/theme.css";
-    import { taskStore } from "$lib/stores/taskStore.svelte";
+    import {
+        taskStore,
+        calculateTaskDuration,
+    } from "$lib/stores/taskStore.svelte";
+    import type { Task } from "$lib/types/task";
     import TaskList from "$lib/components/TaskList.svelte";
     import TaskInput from "$lib/components/TaskInput.svelte";
+    import ConfirmDialog from "$lib/components/ConfirmDialog.svelte";
+    import ShortcutsHelp from "$lib/components/ShortcutsHelp.svelte";
     import { formatDate, isSameDay, isToday } from "$lib/utils/time";
     import { exportToMarkdown, copyToClipboard } from "$lib/utils/export";
     import infa from "infa-s5";
@@ -13,6 +19,70 @@
     let showExportToast = $state(false);
     let checkDateInterval: ReturnType<typeof setInterval> | null = null;
     let lastCheckedDate = new Date();
+
+    // 快捷键帮助面板状态
+    let showShortcutsHelp = $state(false);
+
+    // 删除确认弹窗状态
+    let showDeleteConfirm = $state(false);
+    let taskToDelete = $state<Task | null>(null);
+    let deleteConfirmMessage = $state("");
+
+    /** 判断删除任务是否需要二次确认 */
+    function shouldConfirmDelete(task: Task): boolean {
+        // 有 Checkpoint
+        const hasCheckpoints = task.sessions.some(
+            (s) => s.checkpoints.length > 0,
+        );
+        // 总时长超过 5 分钟
+        const totalMs = calculateTaskDuration(task);
+        const hasSignificantTime = totalMs > 5 * 60 * 1000;
+        return hasCheckpoints || hasSignificantTime;
+    }
+
+    /** 生成删除确认消息 */
+    function getDeleteConfirmMessage(task: Task): string {
+        const checkpointCount = task.sessions.reduce(
+            (sum, s) => sum + s.checkpoints.length,
+            0,
+        );
+        const totalMs = calculateTaskDuration(task);
+        const minutes = Math.floor(totalMs / (1000 * 60));
+
+        const parts: string[] = [];
+        if (checkpointCount > 0) parts.push(`${checkpointCount} 个检查点`);
+        if (minutes > 0) parts.push(`用时 ${minutes} 分钟`);
+
+        return `此任务包含 ${parts.join("，")}，确定要删除吗？`;
+    }
+
+    /** 处理删除任务（带确认逻辑） */
+    function handleDeleteTask(task: Task) {
+        if (shouldConfirmDelete(task)) {
+            taskToDelete = task;
+            deleteConfirmMessage = getDeleteConfirmMessage(task);
+            showDeleteConfirm = true;
+        } else {
+            taskStore.deleteTask(task.id);
+            infa.Tip.success("已删除任务");
+        }
+    }
+
+    /** 确认删除 */
+    function confirmDelete() {
+        if (taskToDelete) {
+            taskStore.deleteTask(taskToDelete.id);
+            infa.Tip.success("已删除任务");
+        }
+        showDeleteConfirm = false;
+        taskToDelete = null;
+    }
+
+    /** 取消删除 */
+    function cancelDelete() {
+        showDeleteConfirm = false;
+        taskToDelete = null;
+    }
 
     onMount(() => {
         taskStore.init();
@@ -102,7 +172,7 @@
         const { discarded, durationSeconds } = taskStore.pauseTask(taskId);
         if (discarded) {
             infa.Tip.info(
-                `仅记录了 ${durationSeconds} 秒，未达到 30 秒阈值，已忽略`,
+                `仅记录了 ${durationSeconds} 秒，未达到 10 秒阈值，已忽略`,
             );
         } else {
             infa.Tip.success("已暂停任务");
@@ -194,6 +264,39 @@
                 taskStore.triggerCheckpointFocus(activeTask.id);
             }
         }
+
+        // Delete 或 Backspace 键：删除悬浮或选中的任务
+        if (e.key === "Delete" || e.key === "Backspace") {
+            // 1. 优先删除悬浮的任务
+            if (taskStore.hoveredTaskId) {
+                const hoveredTask = taskStore.tasks.find(
+                    (t) => t.id === taskStore.hoveredTaskId,
+                );
+                if (hoveredTask) {
+                    e.preventDefault();
+                    handleDeleteTask(hoveredTask);
+                    return;
+                }
+            }
+
+            // 2. 其次删除选中的任务
+            if (taskStore.selectedTaskId) {
+                const selectedTask = taskStore.tasks.find(
+                    (t) => t.id === taskStore.selectedTaskId,
+                );
+                if (selectedTask) {
+                    e.preventDefault();
+                    handleDeleteTask(selectedTask);
+                    return;
+                }
+            }
+        }
+
+        // ? 键：打开快捷键帮助面板
+        if (e.key === "?" || (e.shiftKey && e.key === "/")) {
+            e.preventDefault();
+            showShortcutsHelp = true;
+        }
     }
 </script>
 
@@ -213,25 +316,45 @@
                     <span class="title-icon">⏱️</span>
                     TimeFlow
                 </h1>
-                <button
-                    class="export-btn"
-                    onclick={handleExport}
-                    title="导出今日记录为 Markdown"
-                >
-                    <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
+                <div class="header-actions">
+                    <button
+                        class="help-btn"
+                        onclick={() => (showShortcutsHelp = true)}
+                        title="快捷键帮助"
                     >
-                        <path
-                            d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"
-                        />
-                    </svg>
-                    导出
-                </button>
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3" />
+                            <path d="M12 17h.01" />
+                        </svg>
+                    </button>
+                    <button
+                        class="export-btn"
+                        onclick={handleExport}
+                        title="导出今日记录为 Markdown"
+                    >
+                        <svg
+                            width="18"
+                            height="18"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path
+                                d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"
+                            />
+                        </svg>
+                        导出
+                    </button>
+                </div>
             </div>
             <div class="header-info">
                 <div class="date-nav">
@@ -312,6 +435,23 @@
     <TaskInput />
 </div>
 
+<!-- 删除确认弹窗 -->
+<ConfirmDialog
+    open={showDeleteConfirm}
+    title="删除任务"
+    message={deleteConfirmMessage}
+    confirmText="确认删除"
+    cancelText="取消"
+    onConfirm={confirmDelete}
+    onCancel={cancelDelete}
+/>
+
+<!-- 快捷键帮助面板 -->
+<ShortcutsHelp
+    open={showShortcutsHelp}
+    onClose={() => (showShortcutsHelp = false)}
+/>
+
 <style>
     .app-container {
         min-height: 100vh;
@@ -356,6 +496,36 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--tf-spacing-sm);
+    }
+
+    .help-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--tf-bg-secondary);
+        color: var(--tf-text-secondary);
+        border: 1px solid var(--tf-border);
+        border-radius: var(--tf-radius-md);
+        /* 方形按钮，宽高相等 */
+        width: 38px;
+        height: 38px;
+        padding: 0;
+        cursor: pointer;
+        transition: all var(--tf-transition-fast);
+    }
+
+    .help-btn:hover {
+        background: var(--tf-primary-light);
+        color: var(--tf-primary-dark);
+        border-color: var(--tf-primary);
+        transform: translateY(-1px);
+        box-shadow: var(--tf-shadow-sm);
     }
 
     .export-btn {

@@ -10,7 +10,11 @@
 
     function handleSubmit() {
         const trimmed = inputValue.trim();
-        if (!trimmed) return;
+        if (!trimmed) {
+            // 空输入时按 Enter 等于关闭输入框
+            isExpanded = false;
+            return;
+        }
 
         taskStore.addTask({ title: trimmed });
         inputValue = "";
