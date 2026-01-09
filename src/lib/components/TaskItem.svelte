@@ -34,6 +34,10 @@
         if (isSelected) {
             isExpanded = true;
         } else {
+            // 如果失去选中且正在编辑标题，则关闭编辑模式
+            if (isEditingTitle) {
+                handleSaveTitle();
+            }
             // 只有未选中且任务是 pending/completed 时才收拢
             if (task.status === "pending" || task.status === "completed") {
                 isExpanded = false;
@@ -173,38 +177,42 @@
 
     function handleStartTitleEdit(e: MouseEvent) {
         e.stopPropagation();
-        if (isSelected) {
-            editedTitle = task.title;
-            isEditingTitle = true;
-        } else {
-            // 如果未选中，第一下点击标题仅执行选中操作
+
+        // 如果未选中，先执行选中操作
+        if (taskStore.selectedTaskId !== task.id) {
             taskStore.setSelectedTaskId(task.id);
         }
+
+        // 立即进入编辑模式 (不再要求第二次点击)
+        editedTitle = task.title;
+        isEditingTitle = true;
     }
 
     function handleSaveTitle() {
+        if (!isEditingTitle) return;
+
         const trimmed = editedTitle.trim();
         if (trimmed && trimmed !== task.title) {
             taskStore.updateTask(task.id, { title: trimmed });
         }
-        if (isEditingTitle) {
-            // 如果正处于编辑态（由于 blur 触发），设置临时拦截标志
-            suppressNextClick = true;
-            setTimeout(() => (suppressNextClick = false), 100);
-        }
+
+        // 设置临时拦截标志，防止 blur 后的 click 事件导致卡片收拢/展开切换
+        suppressNextClick = true;
+        setTimeout(() => (suppressNextClick = false), 150);
         isEditingTitle = false;
     }
 
     function handleKeyDownTitle(e: KeyboardEvent) {
-        // 阻止事件冒泡，防止触发全局快捷键（如 Enter 新增任务）
+        // 阻止事件冒泡，防止触发全局快捷键
         e.stopPropagation();
 
         if (e.key === "Enter") {
             handleSaveTitle();
         } else if (e.key === "Escape") {
-            suppressNextClick = true;
-            setTimeout(() => (suppressNextClick = false), 100);
+            // 取消修改
             isEditingTitle = false;
+            suppressNextClick = true;
+            setTimeout(() => (suppressNextClick = false), 150);
         }
     }
 
