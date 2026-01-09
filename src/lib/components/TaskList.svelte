@@ -57,7 +57,7 @@
     }
 
     .empty-desc {
-        font-size: 0.875rem;
+        font-size: 1rem;
         color: var(--tf-text-secondary);
         margin: 0;
     }

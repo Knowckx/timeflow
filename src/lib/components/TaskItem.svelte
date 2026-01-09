@@ -1,12 +1,13 @@
 <!-- TaskItem.svelte - 任务卡片组件 -->
 <script lang="ts">
-    import type { Task, WorkSession } from "$lib/types/task";
+    import type { Task } from "$lib/types/task";
     import {
         taskStore,
         calculateTaskDuration,
     } from "$lib/stores/taskStore.svelte";
     import { formatTime, formatDurationReadable } from "$lib/utils/time";
     import CheckpointItem from "./CheckpointItem.svelte";
+    import SessionList from "./SessionList.svelte";
     import ConfirmDialog from "./ConfirmDialog.svelte";
     import infa from "infa-s5";
 
@@ -18,13 +19,32 @@
 
     let showCheckpointInput = $state(false);
     let checkpointNote = $state("");
-    let showSessions = $state(false);
     let showConfirmDialog = $state(false);
 
-    // 任务变为进行中时，自动展开时段列表
+    // 卡片展开状态（简单的布尔值）
+    let isExpanded = $state(false);
+
+    // 是否处于悬浮状态
+    const isHovered = $derived(taskStore.hoveredTaskId === task.id);
+    // 是否处于选中状态
+    const isSelected = $derived(taskStore.selectedTaskId === task.id);
+
+    // 当选中状态变化时，自动设置展开状态
     $effect(() => {
-        if (task.status === "active") {
-            showSessions = true;
+        if (isSelected) {
+            isExpanded = true;
+        } else {
+            // 只有未选中且任务是 pending/completed 时才收拢
+            if (task.status === "pending" || task.status === "completed") {
+                isExpanded = false;
+            }
+        }
+    });
+
+    // 进行中或已暂停的任务始终展开
+    $effect(() => {
+        if (task.status === "active" || task.status === "paused") {
+            isExpanded = true;
         }
     });
 
@@ -150,40 +170,38 @@
     function handleDeleteTask() {
         taskStore.deleteTask(task.id);
     }
-
-    function toggleSessions() {
-        showSessions = !showSessions;
-    }
-
-    function formatSessionDuration(session: WorkSession): string {
-        if (!session.endTime) return "进行中";
-        const ms = session.endTime.getTime() - session.startTime.getTime();
-        const minutes = Math.floor(ms / (1000 * 60));
-        if (minutes < 1) return "不到1分钟";
-        if (minutes < 60) return `${minutes}分钟`;
-        const hours = Math.floor(minutes / 60);
-        const remainingMinutes = minutes % 60;
-        return remainingMinutes > 0
-            ? `${hours}小时${remainingMinutes}分钟`
-            : `${hours}小时`;
-    }
 </script>
 
 <div
     class="task-item tf-card"
     class:completed={task.status === "completed"}
-    class:selected={taskStore.selectedTaskId === task.id}
+    class:active={task.status === "active"}
+    class:selected={isSelected}
+    class:expanded={isExpanded}
     onmouseenter={() => taskStore.setHoveredTaskId(task.id)}
     onmouseleave={() => taskStore.setHoveredTaskId(null)}
-    onclick={() => taskStore.setSelectedTaskId(task.id)}
+    onclick={() => {
+        if (isSelected) {
+            // 已选中时，切换展开状态
+            isExpanded = !isExpanded;
+        } else {
+            // 未选中时，选中该卡片
+            taskStore.setSelectedTaskId(task.id);
+        }
+    }}
     onkeydown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
-            taskStore.setSelectedTaskId(task.id);
+            if (isSelected) {
+                isExpanded = !isExpanded;
+            } else {
+                taskStore.setSelectedTaskId(task.id);
+            }
         }
     }}
     tabindex="0"
     role="button"
-    aria-pressed={taskStore.selectedTaskId === task.id}
+    aria-pressed={isSelected}
+    aria-expanded={isExpanded}
 >
     <!-- 时间线指示点 -->
     <div
@@ -197,6 +215,7 @@
     <div class="task-header">
         <div class="task-info">
             <div class="task-title-row">
+                <span class="tf-time">{formatTime(task.createdAt)}</span>
                 <div
                     class="task-title"
                     class:completed={task.status === "completed"}
@@ -204,13 +223,6 @@
                     {task.title}
                 </div>
                 <span class="tf-badge {statusClass}">{statusText}</span>
-            </div>
-            <div class="task-time-info">
-                <span class="tf-time">{formatTime(task.createdAt)}</span>
-                {#if task.status === "completed" && task.completedAt}
-                    <span class="time-arrow">→</span>
-                    <span class="tf-time">{formatTime(task.completedAt)}</span>
-                {/if}
                 {#if formattedDuration}
                     <span class="duration-badge">用时 {formattedDuration}</span>
                 {/if}
@@ -292,48 +304,38 @@
                 }}
                 title="删除任务"
             >
-                🗑
+                <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path
+                        d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+                    />
+                </svg>
             </button>
         </div>
     </div>
 
-    <!-- 工作时段列表 -->
-    {#if task.sessions.length > 0}
-        <button class="sessions-toggle" onclick={toggleSessions}>
-            {showSessions ? "▼" : "▶"}
-            {task.sessions.length} 个工作时段
-        </button>
+    <!-- 展开状态下显示的内容 -->
+    {#if isExpanded}
+        <!-- 工作时段列表 -->
+        <SessionList sessions={task.sessions} taskId={task.id} />
 
-        {#if showSessions}
-            <div class="sessions-list">
-                {#each task.sessions as session, i}
-                    <div class="session-item">
-                        <span class="session-label">时段 {i + 1}</span>
-                        <span class="session-time">
-                            {formatTime(session.startTime)}
-                            {#if session.endTime}
-                                → {formatTime(session.endTime)}
-                            {/if}
-                        </span>
-                        <span class="session-duration"
-                            >{formatSessionDuration(session)}</span
-                        >
-                    </div>
+        <!-- Checkpoints 列表 -->
+        {#if allCheckpoints.length > 0}
+            <div class="tf-checkpoint">
+                {#each allCheckpoints as checkpoint (checkpoint.id)}
+                    <CheckpointItem
+                        {checkpoint}
+                        onDelete={handleDeleteCheckpoint}
+                    />
                 {/each}
             </div>
         {/if}
-    {/if}
-
-    <!-- Checkpoints 列表 -->
-    {#if allCheckpoints.length > 0}
-        <div class="tf-checkpoint">
-            {#each allCheckpoints as checkpoint (checkpoint.id)}
-                <CheckpointItem
-                    {checkpoint}
-                    onDelete={handleDeleteCheckpoint}
-                />
-            {/each}
-        </div>
     {/if}
 
     <!-- Checkpoint 输入 -->
@@ -352,7 +354,7 @@
     {/if}
 </div>
 
-<!-- 确认弹窗 -->
+<!-- 切换任务确认弹窗 -->
 <ConfirmDialog
     open={showConfirmDialog}
     title="切换任务"
@@ -368,20 +370,27 @@
         position: relative;
         margin-bottom: var(--tf-spacing-md);
         transition: all var(--tf-transition-normal);
+        border: 2px solid transparent;
     }
 
     .task-item.completed {
         opacity: 0.7;
     }
 
-    .task-item.selected {
-        /* 保持原背景色，不做大面积改色 */
+    /* 悬浮状态：轻微上浮 + 淡阴影 */
+    .task-item:hover:not(.selected) {
         background: var(--tf-bg-card);
-        /* 更强的弥散阴影，增加漂浮凸起感 */
+        box-shadow: 0 6px 20px rgba(126, 200, 227, 0.15);
+        transform: translateY(-2px);
+    }
+
+    /* 选中状态：主题色边框 + 强阴影 + 明显上浮 */
+    .task-item.selected {
+        background: var(--tf-bg-card);
+        border-color: var(--tf-primary);
         box-shadow:
-            0 8px 24px rgba(126, 200, 227, 0.25),
+            0 8px 28px rgba(126, 200, 227, 0.3),
             0 4px 12px rgba(0, 0, 0, 0.08);
-        /* 更明显的向上漂浮 */
         transform: translateY(-4px);
     }
 
@@ -403,9 +412,14 @@
         flex-wrap: wrap;
     }
 
-    .task-title {
+    .task-title-row .tf-time {
+        flex-shrink: 0;
         font-size: 1rem;
-        font-weight: 500;
+    }
+
+    .task-title {
+        font-size: 1.15rem;
+        font-weight: 600;
         color: var(--tf-text);
         word-break: break-word;
     }
@@ -415,30 +429,17 @@
         color: var(--tf-text-secondary);
     }
 
-    .task-time-info {
-        display: flex;
-        align-items: center;
-        gap: var(--tf-spacing-sm);
-        flex-wrap: wrap;
-        margin-top: var(--tf-spacing-xs);
-    }
-
-    .time-arrow {
-        color: var(--tf-text-muted);
-        font-size: 0.875rem;
-    }
-
     .duration-badge {
         background: var(--tf-bg-secondary);
         color: var(--tf-text-secondary);
-        font-size: 0.75rem;
-        padding: 2px 8px;
+        font-size: 1rem;
+        padding: 4px 10px;
         border-radius: var(--tf-radius-sm);
     }
 
     .tf-badge {
-        font-size: 0.7rem;
-        padding: 2px 8px;
+        font-size: 1rem;
+        padding: 4px 10px;
         border-radius: var(--tf-radius-full);
         font-weight: 500;
     }
@@ -471,49 +472,51 @@
         flex-wrap: wrap;
     }
 
-    .sessions-toggle {
-        background: none;
-        border: none;
-        color: var(--tf-text-secondary);
-        font-size: 0.75rem;
-        cursor: pointer;
-        padding: var(--tf-spacing-xs) 0;
-        margin-top: var(--tf-spacing-sm);
+    /* 悬浮或选中时显示操作按钮 */
+    .task-item:hover .task-actions,
+    .task-item.selected .task-actions {
+        opacity: 1;
     }
 
-    .sessions-toggle:hover {
-        color: var(--tf-primary);
+    /* 进行中任务的特殊样式 */
+    .task-item.active {
+        border-color: var(--tf-accent-green);
+        box-shadow:
+            0 0 0 1px rgba(34, 197, 94, 0.3),
+            0 4px 16px rgba(34, 197, 94, 0.15);
+        animation: active-glow 2s ease-in-out infinite;
     }
 
-    .sessions-list {
-        margin-top: var(--tf-spacing-xs);
-        padding-left: var(--tf-spacing-md);
-    }
-
-    .session-item {
-        display: flex;
-        gap: var(--tf-spacing-sm);
-        font-size: 0.75rem;
-        color: var(--tf-text-secondary);
-        padding: 2px 0;
-    }
-
-    .session-label {
-        color: var(--tf-text-muted);
-    }
-
-    .session-time {
-        color: var(--tf-text-secondary);
-    }
-
-    .session-duration {
-        color: var(--tf-primary);
-        font-weight: 500;
+    @keyframes active-glow {
+        0%,
+        100% {
+            box-shadow:
+                0 0 0 1px rgba(34, 197, 94, 0.3),
+                0 4px 16px rgba(34, 197, 94, 0.15);
+        }
+        50% {
+            box-shadow:
+                0 0 0 2px rgba(34, 197, 94, 0.4),
+                0 4px 20px rgba(34, 197, 94, 0.25);
+        }
     }
 
     .tf-timeline-dot.active {
         background: var(--tf-accent-green);
         box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+        animation: dot-pulse 1.5s ease-in-out infinite;
+    }
+
+    @keyframes dot-pulse {
+        0%,
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.2);
+        }
+        50% {
+            transform: scale(1.15);
+            box-shadow: 0 0 0 6px rgba(34, 197, 94, 0.3);
+        }
     }
 
     .tf-timeline-dot.paused {
@@ -522,10 +525,10 @@
     }
 
     .tf-checkpoint {
-        margin-top: var(--tf-spacing-md);
-        padding-left: var(--tf-spacing-xl);
-        border-left: 2px dashed var(--tf-border);
-        margin-left: 10px;
+        margin-top: 4px;
+        padding-left: 0;
+        border-left: none;
+        margin-left: 0;
     }
 
     .checkpoint-input-wrapper {
@@ -540,7 +543,7 @@
         padding: var(--tf-spacing-sm) var(--tf-spacing-md);
         border: 2px solid var(--tf-border);
         border-radius: var(--tf-radius-md);
-        font-size: 0.875rem;
+        font-size: 1rem;
         outline: none;
         transition: border-color var(--tf-transition-fast);
     }
@@ -555,7 +558,7 @@
         color: white;
         border: none;
         border-radius: var(--tf-radius-md);
-        font-size: 0.875rem;
+        font-size: 1rem;
         cursor: pointer;
         transition: background var(--tf-transition-fast);
     }

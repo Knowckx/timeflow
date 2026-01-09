@@ -312,6 +312,32 @@ function createTaskStore() {
                 };
             });
             saveTasks(tasks);
+        },
+
+        /** 删除工作时段 */
+        deleteSession(taskId: string, sessionId: string): void {
+            tasks = tasks.map(task => {
+                if (task.id !== taskId) return task;
+
+                const remainingSessions = task.sessions.filter(s => s.id !== sessionId);
+
+                // 更新任务状态
+                let newStatus = task.status;
+                if (remainingSessions.length === 0) {
+                    // 没有时段了，回到 pending
+                    newStatus = 'pending';
+                } else if (task.status === 'active' && !remainingSessions.some(s => !s.endTime)) {
+                    // 如果删除的是进行中的时段，变为 paused
+                    newStatus = 'paused';
+                }
+
+                return {
+                    ...task,
+                    status: newStatus,
+                    sessions: remainingSessions
+                };
+            });
+            saveTasks(tasks);
         }
     };
 }

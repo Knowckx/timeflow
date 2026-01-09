@@ -113,7 +113,7 @@
     }
 
     .dialog-message {
-        font-size: 0.875rem;
+        font-size: 1rem;
         color: var(--tf-text-secondary);
         margin: 0 0 var(--tf-spacing-lg);
         line-height: 1.5;

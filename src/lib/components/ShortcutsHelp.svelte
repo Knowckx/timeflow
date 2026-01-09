@@ -14,7 +14,7 @@
             shortcuts: [
                 {
                     keys: ["Space"],
-                    desc: "开始/暂停任务（悬浮 > 选中 > 运行中）",
+                    desc: "开始/暂停任务（悬浮/选中）",
                 },
                 { keys: ["Enter"], desc: "记录 Checkpoint（有运行任务时）" },
                 { keys: ["Shift", "Enter"], desc: "强制新建任务" },
@@ -180,7 +180,7 @@
     }
 
     .group-title {
-        font-size: 0.75rem;
+        font-size: 1rem;
         font-weight: 600;
         color: var(--tf-text-secondary);
         text-transform: uppercase;
@@ -219,7 +219,7 @@
         border: 1px solid var(--tf-border);
         border-radius: var(--tf-radius-sm);
         font-family: var(--tf-font-mono);
-        font-size: 0.75rem;
+        font-size: 1rem;
         font-weight: 500;
         color: var(--tf-text);
         box-shadow: 0 2px 0 var(--tf-border);
@@ -228,17 +228,17 @@
     .key-sm {
         min-width: 20px;
         height: 20px;
-        font-size: 0.65rem;
+        font-size: 1rem;
     }
 
     .key-separator {
         color: var(--tf-text-muted);
-        font-size: 0.75rem;
+        font-size: 1rem;
     }
 
     .desc {
         color: var(--tf-text-secondary);
-        font-size: 0.875rem;
+        font-size: 1rem;
     }
 
     .panel-footer {
@@ -252,6 +252,6 @@
         align-items: center;
         gap: var(--tf-spacing-xs);
         color: var(--tf-text-muted);
-        font-size: 0.75rem;
+        font-size: 1rem;
     }
 </style>

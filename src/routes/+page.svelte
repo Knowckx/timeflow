@@ -324,8 +324,8 @@
                         style="width: 36px; padding: 0;"
                     >
                         <svg
-                            width="18"
-                            height="18"
+                            width="22"
+                            height="22"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
@@ -491,7 +491,8 @@
     }
 
     .app-subtitle {
-        font-size: 0.875rem;
+        font-size: 1.1rem;
+        font-weight: 600;
         color: var(--tf-text-secondary);
         margin: var(--tf-spacing-xs) 0 0;
     }
@@ -503,6 +504,19 @@
     }
 
     .header-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--tf-spacing-sm);
+    }
+
+    .header-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: var(--tf-spacing-md);
+    }
+
+    .date-nav {
         display: flex;
         align-items: center;
         gap: var(--tf-spacing-sm);
@@ -527,7 +541,7 @@
         border: none;
         border-radius: var(--tf-radius-full);
         padding: var(--tf-spacing-xs) var(--tf-spacing-md);
-        font-size: 0.75rem;
+        font-size: 1rem;
         font-weight: 600;
         cursor: pointer;
         transition: all var(--tf-transition-fast);
@@ -551,11 +565,11 @@
         );
         padding: var(--tf-spacing-xs) var(--tf-spacing-md);
         border-radius: var(--tf-radius-full);
-        font-size: 0.8rem;
+        font-size: 1rem;
     }
 
     .total-time-icon {
-        font-size: 0.9rem;
+        font-size: 1rem;
     }
 
     .total-time-label {

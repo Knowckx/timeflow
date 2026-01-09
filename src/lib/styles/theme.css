@@ -64,6 +64,12 @@
 }
 
 /* ========== 全局样式基础 ========== */
+html {
+  /* 使用 100% 尊重用户浏览器默认字体大小设置 */
+  /* 用户可通过浏览器设置调整，高 DPI 屏幕也会自动适配 */
+  font-size: 100%;
+}
+
 body {
   font-family: var(--tf-font-sans);
   color: var(--tf-text);
@@ -87,7 +93,7 @@ h1, h2, h3, h4, h5, h6 {
   padding: 0 var(--tf-spacing-lg);
   border: none;
   border-radius: var(--tf-radius-md);
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -141,13 +147,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .tf-btn-danger {
-  background: var(--tf-bg-secondary);
-  color: var(--tf-text-secondary);
+  background: #ffe5e3;
+  color: #c53030;
+  box-shadow: var(--tf-shadow-btn-danger);
 }
 .tf-btn-danger:hover {
   background: var(--tf-accent-pink);
   color: #9b2c2c;
-  box-shadow: var(--tf-shadow-btn-danger);
+  box-shadow: 0 6px 16px rgba(255, 170, 165, 0.5);
   transform: translateY(-2px);
 }
 
@@ -292,7 +299,7 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   padding: var(--tf-spacing-xs) var(--tf-spacing-sm);
   border-radius: var(--tf-radius-full);
-  font-size: 0.75rem;
+  font-size: 1rem;
   font-weight: 500;
 }
 
@@ -309,7 +316,7 @@ h1, h2, h3, h4, h5, h6 {
 /* 时间显示 */
 .tf-time {
   font-family: 'SF Mono', 'Consolas', monospace;
-  font-size: 0.875rem;
+  font-size: 1rem;
   color: var(--tf-text-secondary);
 }
 
@@ -342,7 +349,7 @@ h1, h2, h3, h4, h5, h6 {
   left: 50%;
   transform: translate(-50%, -50%);
   color: white;
-  font-size: 0.875rem;
+  font-size: 1rem;
   font-weight: bold;
 }
 
@@ -359,5 +366,5 @@ h1, h2, h3, h4, h5, h6 {
   gap: var(--tf-spacing-sm);
   padding: var(--tf-spacing-sm) 0;
   color: var(--tf-text-secondary);
-  font-size: 0.875rem;
+  font-size: 1rem;
 }
