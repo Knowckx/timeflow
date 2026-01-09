@@ -263,10 +263,10 @@ function createTaskStore() {
             saveTasks(tasks);
         },
 
-        /** 添加 Checkpoint（只能在 active 状态添加） */
+        /** 添加 Checkpoint（支持 active 或 paused 状态） */
         addCheckpoint(taskId: string, input: NewCheckpointInput): Checkpoint | null {
             const task = tasks.find(t => t.id === taskId);
-            if (!task || task.status !== 'active') return null;
+            if (!task || (task.status !== 'active' && task.status !== 'paused')) return null;
 
             const newCheckpoint: Checkpoint = {
                 id: generateId(),
@@ -277,9 +277,19 @@ function createTaskStore() {
             tasks = tasks.map(t => {
                 if (t.id !== taskId) return t;
 
-                // 添加到当前活跃的时段
-                const updatedSessions = t.sessions.map(session => {
-                    if (session.endTime) return session;
+                // 如果有进行中的时段，添加到进行中的时段；
+                // 如果是暂停状态（没有进行中的时段），添加到最后一个时段
+                const hasActiveSession = t.sessions.some(s => !s.endTime);
+
+                const updatedSessions = t.sessions.map((session, index) => {
+                    if (hasActiveSession) {
+                        // 有活跃时段时，只添加到活跃那个
+                        if (session.endTime) return session;
+                    } else {
+                        // 没有活跃时段时（暂停态），添加到最后一个
+                        if (index !== t.sessions.length - 1) return session;
+                    }
+
                     return {
                         ...session,
                         checkpoints: [...session.checkpoints, newCheckpoint]
@@ -291,6 +301,15 @@ function createTaskStore() {
 
             saveTasks(tasks);
             return newCheckpoint;
+        },
+
+        /** 更新任务属性 */
+        updateTask(taskId: string, updates: Partial<Task>): void {
+            tasks = tasks.map(task => {
+                if (task.id !== taskId) return task;
+                return { ...task, ...updates };
+            });
+            saveTasks(tasks);
         },
 
         /** 删除任务 */

@@ -12,13 +12,8 @@
 
     let { sessions, taskId }: Props = $props();
 
-    let showSessions = $state(true);
     let showDeleteConfirm = $state(false);
     let sessionToDelete = $state<string | null>(null);
-
-    function toggleSessions() {
-        showSessions = !showSessions;
-    }
 
     /** 请求删除时段（显示确认弹窗） */
     function handleRequestDelete(sessionId: string) {
@@ -43,22 +38,15 @@
 </script>
 
 {#if sessions.length > 0}
-    <button class="sessions-toggle" onclick={toggleSessions}>
-        {showSessions ? "▼" : "▶"}
+    <div class="sessions-header">
         {sessions.length} 个工作时段
-    </button>
+    </div>
 
-    {#if showSessions}
-        <div class="sessions-list">
-            {#each sessions as session, i}
-                <SessionItem
-                    {session}
-                    index={i}
-                    onDelete={handleRequestDelete}
-                />
-            {/each}
-        </div>
-    {/if}
+    <div class="sessions-list">
+        {#each sessions as session, i}
+            <SessionItem {session} index={i} onDelete={handleRequestDelete} />
+        {/each}
+    </div>
 {/if}
 
 <!-- 删除时段确认弹窗 -->
@@ -73,18 +61,12 @@
 />
 
 <style>
-    .sessions-toggle {
-        background: none;
-        border: none;
-        color: var(--tf-text-secondary);
-        font-size: 1rem;
-        cursor: pointer;
-        padding: 2px 0;
-        margin-top: 4px;
-    }
-
-    .sessions-toggle:hover {
-        color: var(--tf-primary);
+    .sessions-header {
+        color: var(--tf-text-muted);
+        font-size: 0.9rem;
+        padding: 4px 0;
+        margin-top: 8px;
+        font-weight: 500;
     }
 
     .sessions-list {
