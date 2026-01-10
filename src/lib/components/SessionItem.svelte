@@ -79,7 +79,7 @@
     .session-label {
         flex-shrink: 0;
         padding-left: var(--tf-spacing-xs);
-        width: 60px; /* 给一个固定的小宽度 */
+        width: 60px; /* 统一对齐宽度 */
         text-align: left;
         font-size: 1rem;
         color: var(--tf-text-secondary);

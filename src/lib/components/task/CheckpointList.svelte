@@ -20,6 +20,10 @@
 
 <style>
     .tf-checkpoint {
-        margin-top: 4px;
+        margin-top: 12px;
+        margin-bottom: 8px;
+        padding-left: 12px;
+        border-left: 1px dashed rgba(126, 200, 227, 0.2);
+        margin-left: 4px;
     }
 </style>

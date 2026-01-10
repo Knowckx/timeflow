@@ -12,38 +12,80 @@
 </script>
 
 <div class="tf-checkpoint-item">
-    <span class="checkpoint-time tf-time">{formatTime(checkpoint.time)}</span>
-    <span class="checkpoint-note">{checkpoint.note}</span>
-    {#if onDelete}
-        <button
-            class="checkpoint-delete"
-            onclick={() => onDelete?.(checkpoint.id)}
-            aria-label="删除记录点"
-        >
-            <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
+    <!-- 子div 1: 专门存放小圆点 -->
+    <div class="checkpoint-dot-cell">
+        <div class="sub-dot"></div>
+    </div>
+
+    <!-- 子div 2: 存放时间、内容及删除按钮 -->
+    <div class="checkpoint-content-cell">
+        <span class="checkpoint-time">
+            {formatTime(checkpoint.time)}
+        </span>
+        <div class="checkpoint-note">
+            {checkpoint.note}
+        </div>
+
+        {#if onDelete}
+            <button
+                class="checkpoint-delete"
+                onclick={(e) => {
+                    e.stopPropagation();
+                    onDelete(checkpoint.id);
+                }}
+                aria-label="删除记录点"
             >
-                <path
-                    d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
-                />
-            </svg>
-        </button>
-    {/if}
+                <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                >
+                    <path
+                        d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"
+                    />
+                </svg>
+            </button>
+        {/if}
+    </div>
 </div>
 
 <style>
     .tf-checkpoint-item {
         display: flex;
-        align-items: baseline;
-        margin: 2px 0;
+        align-items: stretch;
+        margin: 6px 0;
         border-radius: var(--tf-radius-md);
         transition: all var(--tf-transition-fast);
         border: 1px solid transparent;
+        margin-left: -24px; /* 抵消父内边距(12px) + 槽位半宽(12px)，使虚线完美压在点中心 */
+    }
+
+    .checkpoint-dot-cell {
+        flex-shrink: 0;
+        width: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: baseline; /* 或者用 center，取决于文字对齐方式 */
+        padding-top: 1.1rem; /* 微调点的高度，使其对齐第一行文字基线 */
+    }
+
+    .sub-dot {
+        width: 6px;
+        height: 6px;
+        background: var(--tf-primary-light);
+        border-radius: 50%;
+        border: 1px solid white;
+        opacity: 0.6;
+    }
+
+    .checkpoint-content-cell {
+        flex: 1;
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
     }
 
     .tf-checkpoint-item:hover {
@@ -52,9 +94,9 @@
     }
 
     .checkpoint-time {
-        padding-left: var(--tf-spacing-xs);
+        padding-left: 0; /* 在新布局下不再需要 */
         flex-shrink: 0;
-        width: 90px; /* cp时间宽度 会影响和右侧文字的距离 */
+        width: 100px; /* 统一对齐宽度 */
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
             "Liberation Mono", "Courier New", monospace;
         font-size: 1.1rem;
@@ -63,14 +105,11 @@
         display: inline-flex;
         align-items: center;
         justify-content: flex-start;
-        justify-content: flex-start;
     }
 
     .checkpoint-note {
         flex: 1;
         font-size: 1.1rem;
-        color: var(--tf-text);
-        line-height: 1.5;
         color: var(--tf-text);
         line-height: 1.5;
     }
