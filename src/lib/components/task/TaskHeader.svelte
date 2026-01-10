@@ -16,6 +16,7 @@
         onComplete: () => void;
         onAddCheckpoint: () => void;
         onDeleteTask: () => void;
+        onRevert: () => void;
         onStartTitleEdit: (e: MouseEvent) => void;
         onSaveTitle: () => void;
         onKeyDownTitle: (e: KeyboardEvent) => void;
@@ -34,6 +35,7 @@
         onComplete,
         onAddCheckpoint,
         onDeleteTask,
+        onRevert,
         onStartTitleEdit,
         onSaveTitle,
         onKeyDownTitle,
@@ -73,11 +75,11 @@
             </div>
         {/if}
 
-        <TaskStatusBadge status={task.status} {statusText} {statusClass} />
-
         {#if formattedDuration}
             <span class="duration-badge">用时 {formattedDuration}</span>
         {/if}
+
+        <TaskStatusBadge status={task.status} {statusText} {statusClass} />
     </div>
 
     <!-- 第二行：操作按钮 -->
@@ -137,11 +139,22 @@
             >
                 📝 记录
             </button>
+        {:else if task.status === "completed"}
+            <button
+                class="tf-btn tf-btn-secondary"
+                onclick={(e) => {
+                    e.stopPropagation();
+                    onRevert();
+                }}
+                title="撤回到已暂停状态"
+            >
+                ↺ 撤回
+            </button>
         {/if}
 
         <div class="spacer"></div>
 
-        {#if task.status !== "pending"}
+        {#if task.status !== "pending" && task.status !== "completed"}
             <button
                 class="tf-btn tf-btn-primary"
                 onclick={(e) => {
@@ -198,16 +211,12 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
             "Liberation Mono", "Courier New", monospace;
         font-size: 1.2rem;
+        padding-left: var(--tf-spacing-xs);
         font-weight: 600;
-        color: var(--tf-primary-dark);
-        background: var(--tf-bg-secondary);
-        padding: 4px 6px;
-        border-radius: var(--tf-radius-md);
-        border: 1px solid rgba(126, 200, 227, 0.2);
+        color: var(--tf-text);
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        justify-content: flex-start;
     }
 
     .task-title {
@@ -226,7 +235,8 @@
 
     .task-title.completed {
         text-decoration: line-through;
-        color: var(--tf-text-secondary);
+        color: var(--tf-text);
+        opacity: 0.7;
     }
 
     :global(.task-item.selected) .task-title {
@@ -255,7 +265,7 @@
 
     .duration-badge {
         background: var(--tf-bg-secondary);
-        color: var(--tf-text-secondary);
+        color: var(--tf-text);
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
             "Liberation Mono", "Courier New", monospace;
         font-size: 0.9rem;

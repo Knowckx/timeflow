@@ -263,6 +263,21 @@ function createTaskStore() {
             saveTasks(tasks);
         },
 
+        /** 撤回完成状态，回到暂停状态 */
+        revertTask(taskId: string): void {
+            tasks = tasks.map(task => {
+                if (task.id !== taskId) return task;
+                if (task.status !== 'completed') return task;
+
+                return {
+                    ...task,
+                    status: 'paused' as const,
+                    completedAt: undefined
+                };
+            });
+            saveTasks(tasks);
+        },
+
         /** 添加 Checkpoint（支持 active 或 paused 状态） */
         addCheckpoint(taskId: string, input: NewCheckpointInput): Checkpoint | null {
             const task = tasks.find(t => t.id === taskId);

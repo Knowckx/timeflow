@@ -38,10 +38,6 @@
 </script>
 
 {#if sessions.length > 0}
-    <div class="sessions-header">
-        {sessions.length} 个工作时段
-    </div>
-
     <div class="sessions-list">
         {#each sessions as session, i}
             <SessionItem {session} index={i} onDelete={handleRequestDelete} />
@@ -61,19 +57,8 @@
 />
 
 <style>
-    .sessions-header {
-        color: var(--tf-text-muted);
-        font-size: 0.9rem;
-        padding: 4px 0;
-        margin-top: 12px;
-        font-weight: 500;
-        /* 与时间标签对齐 */
-        margin-left: calc(100px + 12px);
-    }
-
     .sessions-list {
-        margin-top: 4px;
         /* 与时间标签对齐 */
-        margin-left: calc(100px + 12px);
+        margin-left: 0;
     }
 </style>

@@ -21,8 +21,5 @@
 <style>
     .tf-checkpoint {
         margin-top: 4px;
-        padding-left: 0;
-        border-left: none;
-        margin-left: 0;
     }
 </style>

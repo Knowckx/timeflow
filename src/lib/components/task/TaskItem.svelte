@@ -235,6 +235,7 @@
             onPause={handlePause}
             onResume={handleStart}
             onComplete={() => taskStore.completeTask(task.id)}
+            onRevert={() => taskStore.revertTask(task.id)}
             onAddCheckpoint={() => (showCheckpointInput = true)}
             onDeleteTask={() => taskStore.deleteTask(task.id)}
             onStartTitleEdit={handleStartTitleEdit}
@@ -311,7 +312,7 @@
         border-top: 1px solid rgba(126, 200, 227, 0.08);
     }
 
-    .task-item.completed {
+    .task-item.completed:not(.selected) {
         opacity: 0.7;
     }
 

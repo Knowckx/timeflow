@@ -39,8 +39,7 @@
 <style>
     .tf-checkpoint-item {
         display: flex;
-        align-items: flex-start;
-        gap: 12px;
+        align-items: baseline;
         margin: 2px 0;
         border-radius: var(--tf-radius-md);
         transition: all var(--tf-transition-fast);
@@ -53,30 +52,27 @@
     }
 
     .checkpoint-time {
+        padding-left: var(--tf-spacing-xs);
         flex-shrink: 0;
-        width: 100px;
+        width: 90px; /* cp时间宽度 会影响和右侧文字的距离 */
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
             "Liberation Mono", "Courier New", monospace;
-        font-size: 0.95rem;
+        font-size: 1.1rem;
         font-weight: 600;
-        color: var(--tf-primary-dark);
-        background: var(--tf-bg-secondary);
-        padding: 4px 6px;
-        border-radius: var(--tf-radius-md);
-        border: 1px solid rgba(126, 200, 227, 0.2);
+        color: var(--tf-text-secondary);
         display: inline-flex;
         align-items: center;
-        justify-content: center;
-        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-        margin-top: 0px;
+        justify-content: flex-start;
+        justify-content: flex-start;
     }
 
     .checkpoint-note {
         flex: 1;
-        font-size: 1rem;
-        color: var(--tf-text-secondary);
+        font-size: 1.1rem;
+        color: var(--tf-text);
         line-height: 1.5;
-        padding-top: 2px;
+        color: var(--tf-text);
+        line-height: 1.5;
     }
 
     .checkpoint-delete {

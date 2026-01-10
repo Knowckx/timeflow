@@ -75,6 +75,8 @@ body {
   color: var(--tf-text);
   background-color: var(--tf-bg-secondary);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -114,8 +116,10 @@ h1, h2, h3, h4, h5, h6 {
 
 /* 按钮变体 */
 .tf-btn-primary {
-  background: var(--tf-primary);
+  background: #4AA3D4; /* 稍微加深一点背景，提升与白字的对比度 */
   color: white;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* 极其微弱的投影，能让白字瞬间变清晰 */
   box-shadow: var(--tf-shadow-btn-primary);
 }
 .tf-btn-primary:hover {
@@ -401,18 +405,5 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: bold;
 }
 
-/* Checkpoint 样式 */
-.tf-checkpoint {
-  padding-left: var(--tf-spacing-lg);
-  border-left: 2px dashed var(--tf-border);
-  margin-left: var(--tf-spacing-xs);
-}
 
-.tf-checkpoint-item {
-  display: flex;
-  align-items: center;
-  gap: var(--tf-spacing-sm);
-  padding: var(--tf-spacing-sm) 0;
-  color: var(--tf-text-secondary);
-  font-size: 1rem;
-}
+
