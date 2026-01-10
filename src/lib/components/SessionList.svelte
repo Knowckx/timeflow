@@ -65,12 +65,15 @@
         color: var(--tf-text-muted);
         font-size: 0.9rem;
         padding: 4px 0;
-        margin-top: 8px;
+        margin-top: 12px;
         font-weight: 500;
+        /* 与时间标签对齐 */
+        margin-left: calc(100px + 12px);
     }
 
     .sessions-list {
-        margin-top: 2px;
-        padding-left: var(--tf-spacing-md);
+        margin-top: 4px;
+        /* 与时间标签对齐 */
+        margin-left: calc(100px + 12px);
     }
 </style>

@@ -39,28 +39,44 @@
 <style>
     .tf-checkpoint-item {
         display: flex;
-        align-items: center;
-        gap: var(--tf-spacing-sm);
-        padding: 1px 8px;
-        margin: 0 -8px;
-        border-radius: var(--tf-radius-sm);
-        transition: background var(--tf-transition-fast);
+        align-items: flex-start;
+        gap: 12px;
+        margin: 2px 0;
+        border-radius: var(--tf-radius-md);
+        transition: all var(--tf-transition-fast);
+        border: 1px solid transparent;
     }
 
     .tf-checkpoint-item:hover {
         background: var(--tf-bg-secondary);
+        border: 1px solid rgba(126, 200, 227, 0.15);
     }
 
     .checkpoint-time {
         flex-shrink: 0;
-        font-size: 1rem;
-        color: var(--tf-text-muted);
+        width: 100px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+            "Liberation Mono", "Courier New", monospace;
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--tf-primary-dark);
+        background: var(--tf-bg-secondary);
+        padding: 4px 6px;
+        border-radius: var(--tf-radius-md);
+        border: 1px solid rgba(126, 200, 227, 0.2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        margin-top: 0px;
     }
 
     .checkpoint-note {
         flex: 1;
         font-size: 1rem;
         color: var(--tf-text-secondary);
+        line-height: 1.5;
+        padding-top: 2px;
     }
 
     .checkpoint-delete {
@@ -68,10 +84,11 @@
         background: none;
         border: none;
         color: var(--tf-accent-pink);
-        font-size: 1.25rem;
         cursor: pointer;
-        padding: 0 var(--tf-spacing-xs);
+        padding: 4px;
+        border-radius: var(--tf-radius-sm);
         transition: all var(--tf-transition-fast);
+        margin-top: -2px;
     }
 
     .tf-checkpoint-item:hover .checkpoint-delete {

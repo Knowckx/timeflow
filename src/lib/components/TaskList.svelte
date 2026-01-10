@@ -2,14 +2,14 @@
 <script lang="ts">
     import { taskStore } from "$lib/stores/taskStore.svelte";
     import { isSameDay } from "$lib/utils/time";
-    import TaskItem from "./TaskItem.svelte";
+    import TaskItem from "./task/TaskItem.svelte";
 
     // 筛选选中日期的任务
     const filteredTasks = $derived.by(() => {
         const selected = taskStore.selectedDate;
-        return taskStore.tasks.filter((task) =>
-            isSameDay(task.createdAt, selected),
-        );
+        return taskStore.tasks
+            .filter((task) => isSameDay(task.createdAt, selected))
+            .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
     });
 </script>
 

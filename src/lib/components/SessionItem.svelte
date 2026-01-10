@@ -63,13 +63,14 @@
 <style>
     .session-item {
         display: flex;
-        gap: var(--tf-spacing-sm);
-        font-size: 1rem;
+        align-items: center;
+        gap: 12px;
+        font-size: 0.95rem;
         color: var(--tf-text-secondary);
-        padding: 1px 8px;
-        margin: 0 -8px;
+        padding: 4px 0;
+        transition: all var(--tf-transition-fast);
         border-radius: var(--tf-radius-sm);
-        transition: background var(--tf-transition-fast);
+        margin: 0 -4px;
     }
 
     .session-item:hover {
@@ -77,16 +78,37 @@
     }
 
     .session-label {
+        flex-shrink: 0;
+        width: 100px;
+        /* 这里的宽度如果放在外部对齐了，这里就不需要占位，
+           但为了结构清晰，我们让内容本身各就各位 */
+        margin-left: calc(-100px - 12px);
+        text-align: right;
+        font-size: 0.85rem;
         color: var(--tf-text-muted);
+        padding-right: 4px;
     }
 
     .session-time {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+            "Liberation Mono", "Courier New", monospace;
+        font-size: 0.9rem;
         color: var(--tf-text-secondary);
+        background: rgba(0, 0, 0, 0.02);
+        padding: 2px 6px;
+        border-radius: var(--tf-radius-sm);
     }
 
     .session-duration {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+            "Liberation Mono", "Courier New", monospace;
         color: var(--tf-primary);
-        font-weight: 500;
+        font-weight: 600;
+        font-size: 0.9rem;
+        margin-left: 4px;
+        background: rgba(126, 200, 227, 0.1);
+        padding: 2px 6px;
+        border-radius: var(--tf-radius-sm);
     }
 
     .session-delete {
@@ -94,13 +116,11 @@
         background: none;
         border: none;
         color: var(--tf-accent-pink);
-        font-size: 1.25rem;
         cursor: pointer;
-        padding: 0 var(--tf-spacing-xs);
+        padding: 4px;
+        border-radius: var(--tf-radius-sm);
         transition: all var(--tf-transition-fast);
         margin-left: auto;
-        display: flex;
-        align-items: center;
     }
 
     .session-item:hover .session-delete {

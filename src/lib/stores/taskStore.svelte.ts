@@ -167,7 +167,7 @@ function createTaskStore() {
                 sessions: []
             };
 
-            tasks = [newTask, ...tasks];
+            tasks = [...tasks, newTask];
             saveTasks(tasks);
             return newTask;
         },
