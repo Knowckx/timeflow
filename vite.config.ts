@@ -64,13 +64,15 @@ export default defineConfig({
                 includeVersionFile: true // 将 SvelteKit 生成的 _app/version.json 加入 precache，用于版本检测。
             },
             manifest: {
-                name: 'timeflow',
-                short_name: 'timeflow',
-                description: 'timeflow',
+                name: 'TimeFlow - 优雅的时间记录',
+                short_name: 'TimeFlow',
+                description: '一款基于 Svelte 5 的极简主义时间记录工具，帮助您追踪每一分钟的价值。',
+                theme_color: '#7EC8E3',
+                background_color: '#FFFFFF',
                 display: 'standalone', // 显示模式（无浏览器 UI，像原生 App）
                 icons: [
                     {
-                        src: 'pwa-192x192.png',
+                        src: 'pwa-512x512.png',
                         sizes: '192x192',
                         type: 'image/png'
                     },
@@ -82,15 +84,17 @@ export default defineConfig({
                 ],
                 screenshots: [
                     {
-                        src: 'placeholder-1024.png',
+                        src: 'screenshot-desktop.png',
                         sizes: '1024x1024',
                         type: 'image/png',
-                        form_factor: 'wide'
+                        form_factor: 'wide',
+                        label: 'TimeFlow Desktop View'
                     },
                     {
-                        src: 'placeholder-1024.png',
+                        src: 'screenshot-mobile.png',
                         sizes: '1024x1024',
-                        type: 'image/png'
+                        type: 'image/png',
+                        label: 'TimeFlow Mobile View'
                     }
                 ]
             },
