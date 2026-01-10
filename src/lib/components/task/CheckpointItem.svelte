@@ -55,21 +55,22 @@
 <style>
     .tf-checkpoint-item {
         display: flex;
-        align-items: stretch;
+        align-items: flex-start; /* 对齐内容的顶部 */
         margin: 6px 0;
         border-radius: var(--tf-radius-md);
         transition: all var(--tf-transition-fast);
         border: 1px solid transparent;
-        margin-left: -24px; /* 抵消父内边距(12px) + 槽位半宽(12px)，使虚线完美压在点中心 */
+        /* margin-left 已经移除，依赖父容器的伪元素对齐 */
     }
 
     .checkpoint-dot-cell {
         flex-shrink: 0;
         width: 24px;
+        height: 1.65rem; /* 匹配文字 1.1rem * 1.5 行高，确保垂直居中于第一行 */
         display: flex;
         justify-content: center;
-        align-items: baseline; /* 或者用 center，取决于文字对齐方式 */
-        padding-top: 1.1rem; /* 微调点的高度，使其对齐第一行文字基线 */
+        align-items: center; /* 这里的 center 使小圆点在格子内绝对居中 */
+        z-index: 1;
     }
 
     .sub-dot {
@@ -84,8 +85,9 @@
     .checkpoint-content-cell {
         flex: 1;
         display: flex;
-        align-items: baseline;
+        align-items: flex-start; /* 顶部对齐 */
         gap: 12px;
+        padding-top: 0.1rem; /* 极微调，使文字与圆点重心完美匹配 */
     }
 
     .tf-checkpoint-item:hover {
@@ -96,7 +98,7 @@
     .checkpoint-time {
         padding-left: 0; /* 在新布局下不再需要 */
         flex-shrink: 0;
-        width: 100px; /* 统一对齐宽度 */
+        width: 80px;
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
             "Liberation Mono", "Courier New", monospace;
         font-size: 1.1rem;

@@ -64,7 +64,7 @@
     .session-item {
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: var(--tf-spacing-xs);
         font-size: 1rem;
         color: var(--tf-text);
         padding: 4px 0;
