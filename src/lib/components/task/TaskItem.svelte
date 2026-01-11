@@ -1,6 +1,7 @@
 <!-- TaskItem.svelte - 任务卡片综合组件 -->
 <script lang="ts">
     import type { Task } from "$lib/types/task";
+
     import {
         taskStore,
         calculateTaskDuration,
@@ -9,7 +10,6 @@
     import ConfirmDialog from "../ConfirmDialog.svelte";
     import TaskHeader from "./TaskHeader.svelte";
     import CheckpointList from "./CheckpointList.svelte";
-    import CheckpointInput from "./CheckpointInput.svelte";
     import infa from "infa-s5";
 
     interface Props {
@@ -23,6 +23,7 @@
     let showConfirmDialog = $state(false);
     /** 展开状态 */
     let isExpanded = $state(false);
+    let itemRef = $state<HTMLElement>();
 
     // 选中状态
     const isSelected = $derived(taskStore.selectedTaskId === task.id);
@@ -52,8 +53,38 @@
     $effect(() => {
         const signal = taskStore.checkpointFocusSignal;
         if (signal && signal.taskId === task.id) {
-            showCheckpointInput = true;
+            // 第三步：全局信号仅负责“开启”
+            taskStore.clearCheckpointFocusSignal();
+            console.log(
+                `[Checkpoint-Signal] Received signal for ${task.title}. Input state: ${showCheckpointInput}`,
+            );
+            if (!showCheckpointInput) {
+                showCheckpointInput = true;
+                // 对聚焦进行二次加固
+                setTimeout(() => {
+                    const input = itemRef?.querySelector(
+                        ".checkpoint-input-wrapper input",
+                    ) as HTMLInputElement;
+                    if (input) {
+                        console.log(
+                            `[Checkpoint-Focus] Success for: ${task.title}`,
+                        );
+                        input.focus();
+                    } else {
+                        console.warn(
+                            `[Checkpoint-Focus] Element not found in ref for: ${task.title}`,
+                        );
+                    }
+                }, 60);
+            }
         }
+    });
+
+    // 状态变更追踪日志
+    $effect(() => {
+        console.log(
+            `[Checkpoint-State] ${task.title} -> ${showCheckpointInput ? "OPEN" : "CLOSED"}`,
+        );
     });
 
     // 状态工具辅助
@@ -129,14 +160,23 @@
     }
 
     function handleSubmitCheckpoint() {
+        console.log(
+            `[Checkpoint-Action] handleSubmitCheckpoint starting for: ${task.title}, note: "${checkpointNote}"`,
+        );
         const trimmed = checkpointNote.trim();
         if (!trimmed) {
+            console.log(
+                `[Checkpoint-Action] Empty note, closing input for: ${task.title}`,
+            );
             showCheckpointInput = false;
             return;
         }
         taskStore.addCheckpoint(task.id, { note: trimmed });
         checkpointNote = "";
         showCheckpointInput = false;
+        console.log(
+            `[Checkpoint-Action] Submit successful, closed input for: ${task.title}`,
+        );
     }
 
     // 标题编辑逻辑
@@ -180,6 +220,7 @@
 </script>
 
 <div
+    bind:this={itemRef}
     class="task-item tf-card"
     class:completed={task.status === "completed"}
     class:active={task.status === "active"}
@@ -197,6 +238,9 @@
         }
     }}
     onkeydown={(e) => {
+        // 如果 CP 输入框开着，忽略卡片主回车/空格，由输入框自己拦截
+        if (showCheckpointInput) return;
+
         if (e.key === "Enter" || e.key === " ") {
             e.stopPropagation();
             if (e.key === " ") {
@@ -254,11 +298,28 @@
             {/if}
 
             {#if showCheckpointInput}
-                <CheckpointInput
-                    bind:value={checkpointNote}
-                    onCommit={handleSubmitCheckpoint}
-                    onEscape={() => (showCheckpointInput = false)}
-                />
+                <div class="checkpoint-input-wrapper">
+                    <infa.Input
+                        bind:value={checkpointNote}
+                        onEscape={() => (showCheckpointInput = false)}
+                        onkeydown={(e) => {
+                            if (e.key === "Enter") {
+                                console.log(
+                                    `[Checkpoint-Key] Enter pressed in input for: ${task.title}`,
+                                );
+                                e.stopPropagation();
+                                handleSubmitCheckpoint();
+                            } else if (e.key === " ") {
+                                console.log(
+                                    `[Checkpoint-Key] Space pressed (and intercepted) in input for: ${task.title}`,
+                                );
+                                e.stopPropagation();
+                            }
+                        }}
+                        placeholder="记录当前进度..."
+                        autoFocus={true}
+                    />
+                </div>
             {/if}
         </div>
     {/if}
@@ -304,6 +365,13 @@
         margin-top: var(--tf-spacing-xs);
         padding-top: var(--tf-spacing-xs);
         border-top: 1px dashed rgba(126, 200, 227, 0.1);
+    }
+
+    .checkpoint-input-wrapper {
+        display: flex;
+        gap: var(--tf-spacing-sm);
+        margin-top: var(--tf-spacing-md);
+        padding-left: var(--tf-spacing-xl);
     }
 
     .layer-sessions {

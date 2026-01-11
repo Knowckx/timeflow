@@ -2,6 +2,7 @@
     import type { Task } from "$lib/types/task";
     import { formatTime } from "$lib/utils/time";
     import TaskStatusBadge from "./TaskStatusBadge.svelte";
+    import infa from "infa-s5";
 
     interface Props {
         task: Task;
@@ -52,15 +53,19 @@
     <div class="task-info-row">
         <span class="tf-time">{formatTime(task.createdAt)}</span>
         {#if isEditingTitle}
-            <!-- svelte-ignore a11y_autofocus -->
-            <input
-                type="text"
-                class="task-title-input"
+            <infa.Input
                 bind:value={editedTitle}
-                onblur={onSaveTitle}
-                onkeydown={onKeyDownTitle}
-                onclick={(e: MouseEvent) => e.stopPropagation()}
-                use:selectOnMount
+                onEscape={() => {
+                    // 逻辑由 Props 透传
+                }}
+                onkeydown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.stopPropagation();
+                    }
+                    onKeyDownTitle(e);
+                }}
+                autoFocus={true}
+                addClass="task-title-input"
             />
         {:else}
             <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -248,7 +253,7 @@
         cursor: text;
     }
 
-    .task-title-input {
+    :global(.task-title-input) {
         flex: 1;
         min-width: 100px;
         font-size: 1.2rem;

@@ -6,33 +6,30 @@
 
     let inputValue = $state("");
     let inputRef: HTMLInputElement | undefined = $state();
-    let isExpanded = $state(false);
+    let isExpanded = $derived(taskStore.isTaskInputExpanded);
 
     function handleSubmit() {
         const trimmed = inputValue.trim();
         if (!trimmed) {
             // 空输入时按 Enter 等于关闭输入框
-            isExpanded = false;
+            taskStore.setTaskInputExpanded(false);
             return;
         }
 
         taskStore.addTask({ title: trimmed });
         inputValue = "";
-        isExpanded = false;
+        taskStore.setTaskInputExpanded(false);
     }
 
     function handleFabClick() {
-        isExpanded = true;
+        taskStore.setTaskInputExpanded(true);
         // 等待 DOM 更新后聚焦
         setTimeout(() => inputRef?.focus(), 50);
     }
 
     /** 全局快捷键处理 */
     function handleGlobalKeydown(e: KeyboardEvent) {
-        // 如果已经在输入状态，不处理
-        if (isExpanded) return;
-
-        // 如果焦点在其他输入框中，不处理
+        // 如果焦点在输入框中，不处理
         const activeElement = document.activeElement;
         if (
             activeElement instanceof HTMLInputElement ||
@@ -41,19 +38,16 @@
             return;
         }
 
-        // Enter 键：仅在没有运行中的任务时展开新任务输入
-        if (e.key === "Enter" && !e.shiftKey) {
+        // Enter 键：逻辑切换为“仅开启”
+        if (e.key === "Enter") {
             const activeTask = taskStore.getActiveTask();
-            if (!activeTask) {
+            // Shift + Enter 始终针对新任务输入；普通 Enter 仅在没有运行中任务时针对新任务输入
+            const isTargeted = e.shiftKey || !activeTask;
+
+            if (isTargeted && !isExpanded) {
                 e.preventDefault();
                 handleFabClick();
             }
-        }
-
-        // Shift + Enter：强制展开新任务输入
-        if (e.key === "Enter" && e.shiftKey) {
-            e.preventDefault();
-            handleFabClick();
         }
     }
 </script>
@@ -67,9 +61,16 @@
         <div class="task-input-card">
             <infa.Input
                 bind:value={inputValue}
-                onCommit={handleSubmit}
                 onEscape={() => {
-                    isExpanded = false;
+                    taskStore.setTaskInputExpanded(false);
+                }}
+                onkeydown={(e) => {
+                    if (e.key === "Enter") {
+                        e.stopPropagation();
+                        handleSubmit();
+                    } else if (e.key === " ") {
+                        e.stopPropagation();
+                    }
                 }}
                 placeholder="输入新任务，按 Enter 确认..."
                 autoFocus={true}
@@ -78,7 +79,7 @@
                 <button
                     class="tf-btn tf-btn-secondary"
                     onclick={() => {
-                        isExpanded = false;
+                        taskStore.setTaskInputExpanded(false);
                         inputValue = "";
                     }}
                 >

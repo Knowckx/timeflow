@@ -258,10 +258,24 @@
 
         // 处理回车键：快速添加 Checkpoint
         if (e.key === "Enter") {
+            console.log(
+                `[Page-Key] Global Enter received. taskInputExpanded: ${taskStore.isTaskInputExpanded}`,
+            );
+            // 如果任务输入框正开着，回车应该由它优先响应（关闭），这里不触发 CP
+            if (taskStore.isTaskInputExpanded) {
+                console.log("[Page-Key] Task input is open, ignoring for CP");
+                return;
+            }
+
             const activeTask = taskStore.getActiveTask();
             if (activeTask) {
+                console.log(
+                    `[Page-Key] Triggering signal for active task: ${activeTask.id}`,
+                );
                 e.preventDefault();
                 taskStore.triggerCheckpointFocus(activeTask.id);
+            } else {
+                console.log("[Page-Key] No active task found for CP");
             }
         }
 

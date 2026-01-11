@@ -71,7 +71,9 @@ function createTaskStore() {
     let selectedDate = $state<Date>(new Date());
     let hoveredTaskId = $state<string | null>(null);
     let selectedTaskId = $state<string | null>(null);
+    let isTaskInputExpanded = $state(false);
     let checkpointFocusSignal = $state<{ taskId: string; timestamp: number } | null>(null);
+
 
     return {
         /** 获取所有任务 */
@@ -116,7 +118,31 @@ function createTaskStore() {
 
         /** 触发特定任务的 Checkpoint 输入框聚焦 */
         triggerCheckpointFocus(taskId: string) {
+            // 防抖：防止 50ms 内重复触发同一个任务的信号
+            if (checkpointFocusSignal &&
+                checkpointFocusSignal.taskId === taskId &&
+                Date.now() - checkpointFocusSignal.timestamp < 50) {
+                console.log(`[Store] Ignored duplicate signal for ${taskId}`);
+                return;
+            }
+            console.log(`[Store] Triggering signal for ${taskId}`);
             checkpointFocusSignal = { taskId, timestamp: Date.now() };
+        },
+
+        /** 清除 Checkpoint 聚焦信号（消费后调用） */
+        clearCheckpointFocusSignal() {
+            checkpointFocusSignal = null;
+        },
+
+
+        /** 获取任务输入框是否展开 */
+        get isTaskInputExpanded() {
+            return isTaskInputExpanded;
+        },
+
+        /** 设置任务输入框是否展开 */
+        setTaskInputExpanded(expanded: boolean) {
+            isTaskInputExpanded = expanded;
         },
 
         /** 初始化（从 localStorage 加载） */
