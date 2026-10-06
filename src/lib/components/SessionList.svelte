@@ -8,9 +8,10 @@
     interface Props {
         sessions: WorkSession[];
         taskId: string;
+        now: number; // 与任务总用时同步的当前时间
     }
 
-    let { sessions, taskId }: Props = $props();
+    let { sessions, taskId, now }: Props = $props();
 
     let showDeleteConfirm = $state(false);
     let sessionToDelete = $state<string | null>(null);
@@ -40,7 +41,7 @@
 {#if sessions.length > 0}
     <div class="sessions-list">
         {#each sessions as session, i}
-            <SessionItem {session} index={i} onDelete={handleRequestDelete} />
+            <SessionItem {session} {now} index={i} onDelete={handleRequestDelete} />
         {/each}
     </div>
 {/if}

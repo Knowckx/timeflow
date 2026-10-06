@@ -18,6 +18,31 @@
 
     let { task }: Props = $props();
 
+    let durationNow = $state(Date.now()); // 任务与时段共用的用时刷新时间
+    let durationInterval: ReturnType<typeof setInterval> | undefined; // 进行中任务的刷新定时器
+    const isActive = $derived(task.status === "active");
+
+    /** 进行中每分钟刷新用时，状态变化或组件销毁时清理定时器。 */
+    function setupDurationTimer() {
+        refreshDurationTime();
+        if (!isActive) return;
+        durationInterval = setInterval(refreshDurationTime, 60 * 1000);
+        return clearDurationTimer;
+    }
+
+    /** 使用实际时间重新计算用时。 */
+    function refreshDurationTime() {
+        durationNow = Date.now();
+    }
+
+    /** 停止用时刷新。 */
+    function clearDurationTimer() {
+        clearInterval(durationInterval);
+        durationInterval = undefined;
+    }
+
+    $effect(setupDurationTimer);
+
     let showCheckpointInput = $state(false);
     let checkpointNote = $state("");
     let showConfirmDialog = $state(false);
@@ -114,7 +139,7 @@
         }
     });
 
-    const totalDuration = $derived(calculateTaskDuration(task));
+    const totalDuration = $derived(calculateTaskDuration(task, durationNow));
     const formattedDuration = $derived.by(() => {
         if (totalDuration === 0) return null;
         const hours = Math.floor(totalDuration / (1000 * 60 * 60));
@@ -326,7 +351,7 @@
 
     {#if isExpanded && task.sessions.length > 0}
         <div class="task-layer layer-sessions">
-            <SessionList sessions={task.sessions} taskId={task.id} />
+            <SessionList sessions={task.sessions} taskId={task.id} now={durationNow} />
         </div>
     {/if}
 </div>

@@ -49,11 +49,11 @@ function saveTasks(tasks: Task[]): void {
 }
 
 /** 计算任务总用时（毫秒） */
-export function calculateTaskDuration(task: Task): number {
+export function calculateTaskDuration(task: Task, now: number = Date.now()): number {
     return task.sessions.reduce((sum, session) => {
         if (!session.endTime) {
             // 进行中的时段，计算到当前时间
-            return sum + (Date.now() - session.startTime.getTime());
+            return sum + (now - session.startTime.getTime());
         }
         return sum + (session.endTime.getTime() - session.startTime.getTime());
     }, 0);

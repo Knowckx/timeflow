@@ -6,15 +6,16 @@
     interface Props {
         session: WorkSession;
         index: number;
+        now: number; // 进行中时段的用时计算截止时间
         onDelete?: (sessionId: string) => void;
     }
 
-    let { session, index, onDelete }: Props = $props();
+    let { session, index, now, onDelete }: Props = $props();
 
     /** 格式化时段用时 */
-    function formatSessionDuration(session: WorkSession): string {
-        const endTime = session.endTime || new Date();
-        const durationMs = endTime.getTime() - session.startTime.getTime();
+    function formatSessionDuration(session: WorkSession, now: number): string {
+        const endTime = session.endTime?.getTime() ?? now;
+        const durationMs = endTime - session.startTime.getTime();
         const minutes = Math.floor(durationMs / (1000 * 60));
         if (minutes < 1) return "不到1分钟";
         if (minutes < 60) return `${minutes}分钟`;
@@ -34,7 +35,7 @@
             → {formatTime(session.endTime)}
         {/if}
     </span>
-    <span class="session-duration">{formatSessionDuration(session)}</span>
+    <span class="session-duration">{formatSessionDuration(session, now)}</span>
     {#if onDelete}
         <button
             class="session-delete"

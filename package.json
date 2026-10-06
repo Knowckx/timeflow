@@ -6,7 +6,8 @@
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build",
-        "preview": "vite preview"
+        "preview": "vite preview",
+        "pwa": "pnpm build && pnpm preview"
 	},
 	"devDependencies": {
 		"@lucide/svelte": "^0.562.0",
